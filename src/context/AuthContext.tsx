@@ -3,7 +3,6 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  Auth,
   User as FirebaseUser,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -12,7 +11,7 @@ import {
   signOut,
   getRedirectResult,
 } from 'firebase/auth';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 
 interface User {
   id: string;
@@ -45,24 +44,24 @@ const formatUser = (firebaseUser: FirebaseUser): User => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const firebaseContext = useFirebase();
+  const { user: firebaseUser, isUserLoading } = useUser();
+  
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
   const router = useRouter();
   const pathname = usePathname();
   
   const auth = firebaseContext?.auth;
 
   useEffect(() => {
-    if (firebaseContext) {
-      setLoading(firebaseContext.isUserLoading);
-      if (firebaseContext.user) {
-        const formattedUser = formatUser(firebaseContext.user);
-        setUser(formattedUser);
-      } else {
-        setUser(null);
-      }
+    setLoading(isUserLoading);
+    if (firebaseUser) {
+      setUser(formatUser(firebaseUser));
+    } else {
+      setUser(null);
     }
-  }, [firebaseContext]);
+  }, [firebaseUser, isUserLoading]);
 
   useEffect(() => {
     if (loading) return;
@@ -86,7 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
           console.error("Error getting redirect result", error);
         } finally {
-          setLoading(false);
+          // The onAuthStateChanged listener will handle setting the final loading state.
         }
       }
     };
