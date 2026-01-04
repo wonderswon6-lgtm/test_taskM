@@ -18,7 +18,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import Link from 'next/link';
 import { TasksContext } from '@/context/TasksContext';
 import { AddListDialog } from '@/components/AddListDialog';
-import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 const iconMap: { [key: string]: React.ElementType } = {
   List,
@@ -47,22 +47,22 @@ function countIncompleteTasks(tasks: Task[]): number {
 
 function TaskListCard({ list }: { list: TaskList }) {
   const incompleteTasks = useMemo(() => countIncompleteTasks(list.tasks), [list.tasks]);
+  const Icon = iconMap[list.icon] || List;
 
   return (
     <Link href={`/dashboard/list/${list.id}`} className="group block">
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm transition-all group-hover:shadow-md group-hover:-translate-y-1">
-        <div className="relative h-40 w-full">
-            <Image
-            src={list.imageUrl}
-            alt={list.name}
-            fill
-            className="object-cover transition-transform group-hover:scale-105"
-            data-ai-hint={list.imageHint}
-            />
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm transition-all group-hover:shadow-md group-hover:-translate-y-1 flex flex-col h-full">
+        <div className={cn(
+            "flex h-32 w-full items-center justify-center bg-secondary/30",
+            "group-hover:bg-secondary/50 transition-colors"
+          )}>
+            <Icon className="h-12 w-12 text-primary opacity-80 transition-transform group-hover:scale-110" />
         </div>
-        <div className="p-4">
-            <h3 className="text-xl font-bold">{list.name}</h3>
-            <p className="text-sm text-muted-foreground">{incompleteTasks} Tasks</p>
+        <div className="p-4 flex-grow flex flex-col justify-between">
+            <div>
+              <h3 className="text-xl font-bold">{list.name}</h3>
+              <p className="text-sm text-muted-foreground">{incompleteTasks} {incompleteTasks === 1 ? 'Task' : 'Tasks'}</p>
+            </div>
         </div>
       </div>
     </Link>
