@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
+import { TasksProvider } from '@/context/TasksContext';
 
 export const metadata: Metadata = {
   title: 'TaskFlow',
@@ -25,8 +26,10 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ThemeProvider>
-          {children}
-          <Toaster />
+          <TasksProvider>
+            {children}
+            <Toaster />
+          </TasksProvider>
         </ThemeProvider>
       </body>
     </html>

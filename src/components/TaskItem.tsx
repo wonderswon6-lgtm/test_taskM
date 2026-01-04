@@ -1,7 +1,7 @@
 'use client';
 
 import type { Task } from '@/lib/types';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -14,24 +14,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AnimatePresence, motion } from 'framer-motion';
+import { TasksContext } from '@/context/TasksContext';
 
 type TaskItemProps = {
   task: Task;
   level: number;
-  toggleComplete: (taskId: string) => void;
-  updateTaskText: (taskId: string, newText: string) => void;
-  deleteTask: (taskId: string) => void;
-  addSubtask: (parentId: string, text: string) => void;
+  listId: string;
 };
 
 export function TaskItem({
   task,
   level,
-  toggleComplete,
-  updateTaskText,
-  deleteTask,
-  addSubtask,
+  listId,
 }: TaskItemProps) {
+  const { toggleComplete, updateTaskText, deleteTask, addSubtask } = useContext(TasksContext);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
@@ -58,7 +54,7 @@ export function TaskItem({
 
   const handleSave = () => {
     if (editText.trim() && editText.trim() !== task.text) {
-      updateTaskText(task.id, editText.trim());
+      updateTaskText(listId, task.id, editText.trim());
     }
     setIsEditing(false);
   };
@@ -67,7 +63,7 @@ export function TaskItem({
     e.preventDefault();
     e.stopPropagation();
     if (newSubtaskText.trim()) {
-      addSubtask(task.id, newSubtaskText.trim());
+      addSubtask(listId, task.id, newSubtaskText.trim());
       setNewSubtaskText('');
       setShowSubtaskInput(false);
     }
@@ -91,7 +87,7 @@ export function TaskItem({
         <Checkbox
           id={`task-${task.id}`}
           checked={task.completed}
-          onCheckedChange={() => toggleComplete(task.id)}
+          onCheckedChange={() => toggleComplete(listId, task.id)}
           aria-label={`Mark task ${task.text} as ${
             task.completed ? 'incomplete' : 'complete'
           }`}
@@ -138,7 +134,7 @@ export function TaskItem({
                 <span>Edit</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => deleteTask(task.id)}
+                onSelect={() => deleteTask(listId, task.id)}
                 className="text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -181,10 +177,7 @@ export function TaskItem({
                   key={subtask.id}
                   task={subtask}
                   level={level + 1}
-                  toggleComplete={toggleComplete}
-                  updateTaskText={updateTaskText}
-                  deleteTask={deleteTask}
-                  addSubtask={addSubtask}
+                  listId={listId}
                 />
               ))}
             </AnimatePresence>

@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useContext } from 'react';
 import type { Task } from '@/lib/types';
-import { useTasks } from '@/hooks/use-tasks';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,43 +19,26 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { TaskItem } from '@/components/TaskItem';
 import { AIAssistant } from '@/components/AIAssistant';
 import Link from 'next/link';
+import { TasksContext } from '@/context/TasksContext';
+import { notFound } from 'next/navigation';
 
-const initialData: Task[] = [
-  {
-    id: '1',
-    text: 'Design the main dashboard UI',
-    completed: true,
-    subtasks: [
-      { id: '1-1', text: 'Create wireframes', completed: true, subtasks: [] },
-      { id: '1-2', text: 'Develop mockups in Figma', completed: true, subtasks: [] },
-    ],
-  },
-  {
-    id: '2',
-    text: 'Develop the main application features',
-    completed: false,
-    subtasks: [
-      { id: '2-1', text: 'Implement task creation', completed: true, subtasks: [] },
-      { id: '2-2', text: 'Implement task editing and deletion', completed: false, subtasks: [] },
-      { id: '2-3', text: 'Add subtask functionality', completed: false, subtasks: [] },
-    ],
-  },
-  {
-    id: '3',
-    text: 'Prepare for launch',
-    completed: false,
-    subtasks: [],
-  },
-];
 
 export default function ListDetailPage({ params }: { params: { listId: string } }) {
-  const { tasks, ...taskHandlers } = useTasks(initialData);
+  const { lists, ...taskHandlers } = useContext(TasksContext);
   const [newTaskText, setNewTaskText] = useState('');
+
+  const list = useMemo(() => lists.find((l) => l.id === params.listId), [lists, params.listId]);
+
+  if (!list) {
+    return notFound();
+  }
+
+  const tasks = list.tasks;
 
   const handleAddNewTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTaskText.trim()) {
-      taskHandlers.addTask(newTaskText.trim());
+      taskHandlers.addTask(params.listId, newTaskText.trim());
       setNewTaskText('');
     }
   };
@@ -88,7 +70,7 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
             <Link href="/dashboard" className="flex items-center gap-2 text-primary hover:underline">
               <ArrowLeft className="h-5 w-5" />
               <h1 className="font-headline text-4xl font-bold tracking-tight md:text-5xl">
-                Tasks
+                {list.name}
               </h1>
             </Link>
             <p className="mt-2 text-muted-foreground">
@@ -136,6 +118,7 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
                       key={task.id}
                       task={task}
                       level={0}
+                      listId={params.listId}
                       {...taskHandlers}
                     />
                   ))
@@ -158,7 +141,7 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
                   currentTasks={tasks}
                   onAddTasks={(newTasks) => {
                     newTasks.forEach((taskText) =>
-                      taskHandlers.addTask(taskText)
+                      taskHandlers.addTask(params.listId, taskText)
                     );
                   }}
                 />

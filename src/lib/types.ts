@@ -9,6 +9,5 @@ export type TaskList = {
   id: string;
   name: string;
   icon: string;
-  taskCount: number;
   tasks: Task[];
 };
