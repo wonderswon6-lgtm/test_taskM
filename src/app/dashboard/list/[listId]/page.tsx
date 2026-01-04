@@ -27,8 +27,11 @@ import { useAuth } from '@/context/AuthContext';
 export default function ListDetailPage({ params }: { params: { listId: string } }) {
   const { lists, ...taskHandlers } = useContext(TasksContext);
   const [newTaskText, setNewTaskText] = useState('');
-  const { user, loading } = useAuth();
+  const auth = useAuth();
   const router = useRouter();
+
+  const user = auth?.user;
+  const loading = auth?.loading;
 
   useEffect(() => {
     if (!loading && !user) {

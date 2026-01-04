@@ -29,21 +29,10 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  login: async () => {},
-  signup: async () => {},
-  logout: async () => {},
-  loginWithGoogle: async () => {},
-});
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
 
 const formatUser = (firebaseUser: FirebaseUser): User => {
@@ -55,21 +44,25 @@ const formatUser = (firebaseUser: FirebaseUser): User => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { auth, user: firebaseUser, isUserLoading } = useFirebase();
+  const firebaseContext = useFirebase();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  
+  const auth = firebaseContext?.auth;
 
   useEffect(() => {
-    setLoading(isUserLoading);
-    if (firebaseUser) {
-      const formattedUser = formatUser(firebaseUser);
-      setUser(formattedUser);
-    } else {
-      setUser(null);
+    if (firebaseContext) {
+      setLoading(firebaseContext.isUserLoading);
+      if (firebaseContext.user) {
+        const formattedUser = formatUser(firebaseContext.user);
+        setUser(formattedUser);
+      } else {
+        setUser(null);
+      }
     }
-  }, [firebaseUser, isUserLoading]);
+  }, [firebaseContext]);
 
   useEffect(() => {
     if (loading) return;
@@ -102,25 +95,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   const login = async (email?: string, password?: string) => {
-    if (!email || !password) {
-      throw new Error('Email and password are required.');
+    if (!auth || !email || !password) {
+      throw new Error('Auth service not available or email/password missing.');
     }
     await signInWithEmailAndPassword(auth, email, password);
   };
 
   const signup = async (email?: string, password?: string) => {
-    if (!email || !password) {
-      throw new Error('Email and password are required.');
+    if (!auth || !email || !password) {
+      throw new Error('Auth service not available or email/password missing.');
     }
     await createUserWithEmailAndPassword(auth, email, password);
   };
 
   const loginWithGoogle = async () => {
+    if (!auth) {
+      throw new Error('Auth service not available.');
+    }
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
   };
 
   const logout = async () => {
+    if (!auth) {
+      throw new Error('Auth service not available.');
+    }
     await signOut(auth);
   };
 

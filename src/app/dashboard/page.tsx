@@ -77,8 +77,12 @@ function TaskListCard({ list }: { list: TaskList }) {
 
 export default function DashboardPage() {
   const { lists } = useContext(TasksContext);
-  const { user, loading, logout } = useAuth();
+  const auth = useAuth();
   const router = useRouter();
+  
+  const user = auth?.user;
+  const loading = auth?.loading;
+  const logout = auth?.logout;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -107,9 +111,9 @@ export default function DashboardPage() {
               <AvatarImage src={user.avatarUrl} />
               <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
             </Avatar>
-            <Button variant="ghost" size="icon" onClick={logout}>
+            {logout && <Button variant="ghost" size="icon" onClick={logout}>
               <LogOut className="h-5 w-5" />
-            </Button>
+            </Button>}
           </div>
         </header>
 

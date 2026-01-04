@@ -20,13 +20,14 @@ import { useToast } from '@/hooks/use-toast';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, loginWithGoogle, loading } = useAuth();
+  const auth = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
     try {
-      await login(email, password);
+      await auth.login(email, password);
     } catch (error: any) {
       toast({
         title: 'Login Failed',
@@ -37,8 +38,9 @@ export default function LoginPage() {
   };
   
   const handleGoogleLogin = async () => {
+    if (!auth) return;
     try {
-      await loginWithGoogle();
+      await auth.loginWithGoogle();
     } catch (error: any) {
       toast({
         title: 'Login Failed',
@@ -47,6 +49,8 @@ export default function LoginPage() {
       });
     }
   };
+  
+  const loading = auth?.loading;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
