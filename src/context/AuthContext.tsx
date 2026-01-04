@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Auth,
   User as FirebaseUser,
@@ -10,6 +10,7 @@ import {
   signInWithEmailAndPassword,
   signInWithRedirect,
   signOut,
+  getRedirectResult,
 } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 
@@ -58,72 +59,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setLoading(isUserLoading);
     if (firebaseUser) {
       const formattedUser = formatUser(firebaseUser);
       setUser(formattedUser);
-      if (router) {
-         const currentPath = window.location.pathname;
-         if (currentPath === '/login' || currentPath === '/signup' || currentPath === '/') {
-            router.push('/dashboard');
-         }
-      }
     } else {
       setUser(null);
-      const protectedRoutes = ['/dashboard', '/dashboard/list'];
-      if (protectedRoutes.some(path => window.location.pathname.startsWith(path))) {
-          router.push('/login');
-      }
     }
-  }, [firebaseUser, isUserLoading, router]);
+  }, [firebaseUser, isUserLoading]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
+    const isProtectedRoute = pathname.startsWith('/dashboard');
+
+    if (user && isAuthPage) {
+      router.push('/dashboard');
+    } else if (!user && isProtectedRoute) {
+      router.push('/login');
+    }
+  }, [user, loading, pathname, router]);
+
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      if(auth) {
+        try {
+          setLoading(true);
+          await getRedirectResult(auth);
+        } catch (error) {
+          console.error("Error getting redirect result", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    handleRedirectResult();
+  }, [auth]);
+
 
   const login = async (email?: string, password?: string) => {
     if (!email || !password) {
       throw new Error('Email and password are required.');
     }
-    setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      setLoading(false);
-      throw error;
-    }
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const signup = async (email?: string, password?: string) => {
     if (!email || !password) {
       throw new Error('Email and password are required.');
     }
-    setLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      setLoading(false);
-      throw error;
-    }
+    await createUserWithEmailAndPassword(auth, email, password);
   };
 
   const loginWithGoogle = async () => {
-    setLoading(true);
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithRedirect(auth, provider);
-    } catch (error) {
-      setLoading(false);
-      throw error;
-    }
+    await signInWithRedirect(auth, provider);
   };
 
   const logout = async () => {
-    setLoading(true);
-    try {
-      await signOut(auth);
-    } catch (error) {
-      setLoading(false);
-      throw error;
-    }
+    await signOut(auth);
   };
 
   const value = {
