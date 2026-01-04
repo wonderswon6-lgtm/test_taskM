@@ -2,13 +2,20 @@
 
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import {
+  Auth,
+  User as FirebaseUser,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithRedirect,
+  signOut,
+} from 'firebase/auth';
+import { useFirebase } from '@/firebase';
 
-// This is a placeholder user type. You can expand it with more user details.
 interface User {
   id: string;
-  email: string | undefined;
+  email: string | null;
   avatarUrl?: string;
 }
 
@@ -38,106 +45,85 @@ export const useAuth = () => {
   return context;
 };
 
-const formatUser = (supabaseUser: SupabaseUser): User => {
-    return {
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        avatarUrl: supabaseUser.user_metadata?.avatar_url
-    }
-}
+const formatUser = (firebaseUser: FirebaseUser): User => {
+  return {
+    id: firebaseUser.uid,
+    email: firebaseUser.email,
+    avatarUrl: firebaseUser.photoURL || undefined,
+  };
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const { auth, user: firebaseUser, isUserLoading } = useFirebase();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const getSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            setUser(formatUser(session.user));
-        }
-        setLoading(false);
-    }
-    
-    getSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          setUser(formatUser(session.user));
-          router.push('/dashboard');
-        }
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-          router.push('/login');
-        }
+    setLoading(isUserLoading);
+    if (firebaseUser) {
+      const formattedUser = formatUser(firebaseUser);
+      setUser(formattedUser);
+      if (router) {
+         const currentPath = window.location.pathname;
+         if (currentPath === '/login' || currentPath === '/signup' || currentPath === '/') {
+            router.push('/dashboard');
+         }
       }
-    );
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, [router]);
+    } else {
+      setUser(null);
+      const protectedRoutes = ['/dashboard', '/dashboard/list'];
+      if (protectedRoutes.some(path => window.location.pathname.startsWith(path))) {
+          router.push('/login');
+      }
+    }
+  }, [firebaseUser, isUserLoading, router]);
 
   const login = async (email?: string, password?: string) => {
     if (!email || !password) {
-        throw new Error("Email and password are required.");
+      throw new Error('Email and password are required.');
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-        setLoading(false);
-        throw error;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      setLoading(false);
+      throw error;
     }
-    // The onAuthStateChange listener will handle setting the user and redirecting
   };
 
   const signup = async (email?: string, password?: string) => {
     if (!email || !password) {
-        throw new Error("Email and password are required.");
+      throw new Error('Email and password are required.');
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`
-        }
-    });
-    if (error) {
-        setLoading(false);
-        throw error;
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      setLoading(false);
+      throw error;
     }
-    // The onAuthStateChange listener will handle setting the user and redirecting after email confirmation
-    alert('Please check your email to confirm your account.');
-    setLoading(false);
   };
-  
+
   const loginWithGoogle = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: `${window.location.origin}/dashboard`
-        }
-    });
-    if (error) {
-        setLoading(false);
-        throw error;
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithRedirect(auth, provider);
+    } catch (error) {
+      setLoading(false);
+      throw error;
     }
-    // The onAuthStateChange listener will handle setting the user and redirecting
   };
 
   const logout = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        setLoading(false);
-        throw error;
+    try {
+      await signOut(auth);
+    } catch (error) {
+      setLoading(false);
+      throw error;
     }
-    // The onAuthStateChange listener will handle setting user to null and redirecting
-    setLoading(false);
   };
 
   const value = {
