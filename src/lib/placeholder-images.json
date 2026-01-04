@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "list-all",
+      "description": "A general list of all tasks.",
+      "imageUrl": "https://images.unsplash.com/photo-1758273705726-d7557303e816?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8b3JnYW5pemVkJTIwdGFza3N8ZW58MHx8fHwxNzY3NTM3OTE1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "organized tasks"
+    },
+    {
+      "id": "list-work",
+      "description": "Tasks related to work.",
+      "imageUrl": "https://images.unsplash.com/photo-1641943523059-6ebe0dcb209a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwcm9mZXNzaW9uYWwlMjB3b3Jrc3BhY2V8ZW58MHx8fHwxNzY3NTM3OTE1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional workspace"
+    },
+    {
+      "id": "list-music",
+      "description": "Music related tasks.",
+      "imageUrl": "https://images.unsplash.com/photo-1567787609897-efa3625dd22d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bXVzaWMlMjBzdHVkaW98ZW58MHx8fHwxNzY3NDU4MDYxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "music studio"
+    },
+    {
+      "id": "list-travel",
+      "description": "Tasks for planning travel.",
+      "imageUrl": "https://images.unsplash.com/photo-1525849306000-cc26ceb5c1d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx0cmF2ZWwlMjBkZXN0aW5hdGlvbnxlbnwwfHx8fDE3Njc0NTEzOTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "travel destination"
+    },
+    {
+      "id": "list-study",
+      "description": "Tasks related to studying.",
+      "imageUrl": "https://images.unsplash.com/photo-1616400619175-5beda3a17896?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdHVkeSUyMGRlc2t8ZW58MHx8fHwxNzY3NDgwODIyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "study desk"
+    },
+    {
+      "id": "list-home",
+      "description": "Home-related chores and tasks.",
+      "imageUrl": "https://images.unsplash.com/photo-1614045959735-6f9dc28cb994?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjb3p5JTIwaG9tZXxlbnwwfHx8fDE3Njc0NDYwMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cozy home"
+    },
+    {
+      "id": "list-art",
+      "description": "Art projects and creative tasks.",
+      "imageUrl": "https://images.unsplash.com/photo-1534511902651-6ab0ce131f2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcnQlMjBzdHVkaW98ZW58MHx8fHwxNzY3NTA0OTczfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "art studio"
+    },
+    {
+      "id": "list-shopping",
+      "description": "Shopping lists and errands.",
+      "imageUrl": "https://images.unsplash.com/photo-1575898201154-d65111ab78b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzaG9wcGluZyUyMGNhcnR8ZW58MHx8fHwxNzY3NTI5MjYyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "shopping cart"
+    }
+  ]
 }

@@ -18,6 +18,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import Link from 'next/link';
 import { TasksContext } from '@/context/TasksContext';
 import { AddListDialog } from '@/components/AddListDialog';
+import Image from 'next/image';
 
 const iconMap: { [key: string]: React.ElementType } = {
   List,
@@ -45,15 +46,24 @@ function countIncompleteTasks(tasks: Task[]): number {
 
 
 function TaskListCard({ list }: { list: TaskList }) {
-  const Icon = iconMap[list.icon];
   const incompleteTasks = useMemo(() => countIncompleteTasks(list.tasks), [list.tasks]);
 
   return (
-    <Link href={`/dashboard/list/${list.id}`}>
-      <div className="rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
-        {Icon && <Icon className="mb-6 h-8 w-8 text-primary" />}
-        <h3 className="text-xl font-bold">{list.name}</h3>
-        <p className="text-sm text-muted-foreground">{incompleteTasks} Tasks</p>
+    <Link href={`/dashboard/list/${list.id}`} className="group block">
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm transition-all group-hover:shadow-md group-hover:-translate-y-1">
+        <div className="relative h-40 w-full">
+            <Image
+            src={list.imageUrl}
+            alt={list.name}
+            fill
+            className="object-cover transition-transform group-hover:scale-105"
+            data-ai-hint={list.imageHint}
+            />
+        </div>
+        <div className="p-4">
+            <h3 className="text-xl font-bold">{list.name}</h3>
+            <p className="text-sm text-muted-foreground">{incompleteTasks} Tasks</p>
+        </div>
       </div>
     </Link>
   );
@@ -75,7 +85,7 @@ export default function DashboardPage() {
           <ThemeToggle />
         </header>
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
           {lists.map((list) => (
             <TaskListCard key={list.id} list={list} />
           ))}

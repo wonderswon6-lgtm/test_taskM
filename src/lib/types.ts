@@ -10,4 +10,6 @@ export type TaskList = {
   name: string;
   icon: string;
   tasks: Task[];
+  imageUrl: string;
+  imageHint: string;
 };

@@ -2,6 +2,15 @@
 
 import { createContext, useState, useCallback, ReactNode } from 'react';
 import type { TaskList, Task } from '@/lib/types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+
+const getImageData = (seed: string) => {
+    const imageData = PlaceHolderImages.find((img) => img.id.includes(seed));
+    return {
+        imageUrl: imageData?.imageUrl || `https://picsum.photos/seed/${seed}/400/300`,
+        imageHint: imageData?.imageHint || 'random image',
+    }
+}
 
 const initialTaskLists: TaskList[] = [
     {
@@ -27,6 +36,7 @@ const initialTaskLists: TaskList[] = [
           ],
         },
       ],
+      ...getImageData('all')
     },
     {
       id: '2',
@@ -40,42 +50,49 @@ const initialTaskLists: TaskList[] = [
               subtasks: [],
           }
       ],
+      ...getImageData('work')
     },
     {
       id: '3',
       name: 'Music',
       icon: 'Music',
       tasks: [],
+      ...getImageData('music')
     },
     {
       id: '4',
       name: 'Travel',
       icon: 'Plane',
       tasks: [],
+      ...getImageData('travel')
     },
     {
       id: '5',
       name: 'Study',
       icon: 'BookOpen',
       tasks: [],
+      ...getImageData('study')
     },
     {
       id: '6',
       name: 'Home',
       icon: 'Home',
       tasks: [],
+      ...getImageData('home')
     },
     {
       id: '7',
       name: 'Art',
       icon: 'Palette',
       tasks: [],
+      ...getImageData('art')
     },
     {
       id: '8',
       name: 'Shopping',
       icon: 'ShoppingCart',
       tasks: [],
+      ...getImageData('shopping')
     },
   ];
 
@@ -108,6 +125,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       name,
       icon,
       tasks: [],
+      ...getImageData(name.toLowerCase())
     };
     setLists((prevLists) => [...prevLists, newList]);
   }, []);
