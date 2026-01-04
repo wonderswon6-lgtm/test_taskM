@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task in the TaskFlow application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the task."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates whether the task is completed or not."
+        },
+        "subtaskIds": {
+          "type": "array",
+          "description": "References to Subtasks. (Relationship: Task 1:N Subtask)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "isCompleted"
+      ]
+    },
+    "Subtask": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Subtask",
+      "type": "object",
+      "description": "Represents a subtask (checklist item) within a Task.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Subtask entity."
+        },
+        "taskId": {
+          "type": "string",
+          "description": "Reference to Task. (Relationship: Task 1:N Subtask)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the subtask."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates if the subtask is completed."
+        }
+      },
+      "required": [
+        "id",
+        "taskId",
+        "description",
+        "isCompleted"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Stores tasks owned by a specific user. Includes denormalized 'userId' in the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique identifier of the task."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/tasks/{taskId}/subtasks/{subtaskId}",
+        "definition": {
+          "entityName": "Subtask",
+          "schema": {
+            "$ref": "#/backend/entities/Subtask"
+          },
+          "description": "Stores subtasks associated with a specific task. Includes denormalized 'userId' and 'taskId' in the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique identifier of the parent task."
+            },
+            {
+              "name": "subtaskId",
+              "description": "The unique identifier of the subtask."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to provide a secure and scalable solution for the TaskFlow application, adhering to the principles of Authorization Independence, Structural Segregation, Access Modeling, and Data Clarity.  The core structure centers around user-owned tasks and subtasks. By creating a nested collections under `/users/{userId}` we can easily secure user data. \n\nAuthorization Independence is achieved by structuring the data such that each task and subtask inherently belongs to a specific user, eliminating the need for complex `get()` calls in security rules. This is achieved through path-based ownership and guarantees atomic operations and simplifies debugging. All read/write operations are scoped to the user's own data.\n\nStructural Segregation is maintained by storing tasks and subtasks in dedicated collections, ensuring that documents within each collection share the same security requirements. Subtasks are kept in subcollections of tasks to reduce look-ups.  All tasks and subtasks are private to the user.\n\nAccess Modeling relies on Path-Based Ownership where tasks and subtasks are owned by a specific user and live under the user's document.\n\nQAPs (Rules are not Filters) is achieved through a combination of structural segregation. List operations are secured by the path-based ownership model, ensuring that users can only access their own tasks and subtasks.  This structure enables secure and efficient listing of tasks and subtasks for a specific user."
+  }
+}
