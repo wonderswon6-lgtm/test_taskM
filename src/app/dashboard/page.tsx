@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Plus, CheckCircle, ListTodo, CornerDownRight } from 'lucide-react';
+import { Plus, CheckCircle, ListTodo, CornerDownRight, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TaskItem } from '@/components/TaskItem';
 import { AIAssistant } from '@/components/AIAssistant';
@@ -113,12 +113,13 @@ export default function DashboardPage() {
       <main className="container mx-auto p-4 py-8 md:p-8">
         <header className="mb-8 flex items-center justify-between">
           <div>
-            <Link href="/">
-              <h1 className="font-headline text-4xl font-bold tracking-tight text-primary md:text-5xl">
+            <Link href="/" className="flex items-center gap-2 text-primary hover:underline">
+              <ArrowLeft className="h-5 w-5" />
+              <h1 className="font-headline text-4xl font-bold tracking-tight md:text-5xl">
                 TaskFlow
               </h1>
             </Link>
-            <p className="text-muted-foreground">
+            <p className="mt-2 text-muted-foreground">
               {format(new Date(), "'Today is' eeee, MMMM do")}
             </p>
           </div>
