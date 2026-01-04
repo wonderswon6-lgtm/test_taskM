@@ -2,6 +2,8 @@
 
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 // This is a placeholder user type. You can expand it with more user details.
 interface User {
@@ -16,7 +18,6 @@ interface AuthContextType {
   login: (email?: string, password?: string) => Promise<void>;
   signup: (email?: string, password?: string) => Promise<void>;
   logout: () => Promise<void>;
-  // Add social login placeholders
   loginWithGoogle: () => Promise<void>;
 }
 
@@ -37,69 +38,106 @@ export const useAuth = () => {
   return context;
 };
 
+const formatUser = (supabaseUser: SupabaseUser): User => {
+    return {
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        avatarUrl: supabaseUser.user_metadata?.avatar_url
+    }
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  
-  // In a real app, you'd check for an existing session here (e.g., from localStorage or a cookie)
+
   useEffect(() => {
-    // Placeholder: Check for a user session.
-    // Replace this with your actual Supabase session logic.
-    const checkUser = async () => {
-      setLoading(true);
-      // const { data: { session } } = await supabase.auth.getSession();
-      // if (session) {
-      //   setUser({ id: session.user.id, email: session.user.email });
-      // } else {
-      //   setUser(null);
-      // }
-      setLoading(false);
+    const getSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            setUser(formatUser(session.user));
+        }
+        setLoading(false);
+    }
+    
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setUser(formatUser(session.user));
+          router.push('/dashboard');
+        }
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          router.push('/login');
+        }
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
     };
-    checkUser();
-  }, []);
+  }, [router]);
 
   const login = async (email?: string, password?: string) => {
+    if (!email || !password) {
+        throw new Error("Email and password are required.");
+    }
     setLoading(true);
-    // Placeholder: Replace with your Supabase login logic
-    console.log('Logging in with:', email, password);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-    const mockUser = { id: '123', email: email, avatarUrl: `https://i.pravatar.cc/150?u=${email}` };
-    setUser(mockUser);
-    setLoading(false);
-    router.push('/dashboard');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+        setLoading(false);
+        throw error;
+    }
+    // The onAuthStateChange listener will handle setting the user and redirecting
   };
 
   const signup = async (email?: string, password?: string) => {
+    if (!email || !password) {
+        throw new Error("Email and password are required.");
+    }
     setLoading(true);
-    // Placeholder: Replace with your Supabase signup logic
-    console.log('Signing up with:', email, password);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-    const mockUser = { id: '123', email: email, avatarUrl: `https://i.pravatar.cc/150?u=${email}` };
-    setUser(mockUser);
+    const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`
+        }
+    });
+    if (error) {
+        setLoading(false);
+        throw error;
+    }
+    // The onAuthStateChange listener will handle setting the user and redirecting after email confirmation
+    alert('Please check your email to confirm your account.');
     setLoading(false);
-    router.push('/dashboard');
   };
   
   const loginWithGoogle = async () => {
     setLoading(true);
-    // Placeholder: Replace with your Supabase Google login logic
-    console.log('Logging in with Google');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const mockUser = { id: '456', email: 'googleuser@example.com', avatarUrl: 'https://i.pravatar.cc/150?u=google' };
-    setUser(mockUser);
-    setLoading(false);
-    router.push('/dashboard');
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${window.location.origin}/dashboard`
+        }
+    });
+    if (error) {
+        setLoading(false);
+        throw error;
+    }
+    // The onAuthStateChange listener will handle setting the user and redirecting
   };
 
   const logout = async () => {
     setLoading(true);
-    // Placeholder: Replace with your Supabase logout logic
-    console.log('Logging out');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setUser(null);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        setLoading(false);
+        throw error;
+    }
+    // The onAuthStateChange listener will handle setting user to null and redirecting
     setLoading(false);
-    router.push('/login');
   };
 
   const value = {
