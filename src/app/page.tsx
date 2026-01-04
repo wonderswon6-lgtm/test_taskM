@@ -27,7 +27,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-8">
               <Button asChild size="lg">
-                <Link href="/dashboard">Get Started</Link>
+                <Link href="/login">Get Started</Link>
               </Button>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-8">
               <Button asChild size="lg">
-                <Link href="/dashboard">Go to Dashboard</Link>
+                <Link href="/login">Go to Dashboard</Link>
               </Button>
             </div>
           </div>

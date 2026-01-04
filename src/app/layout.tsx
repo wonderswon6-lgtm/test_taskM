@@ -3,6 +3,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { TasksProvider } from '@/context/TasksContext';
+import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'TaskFlow',
@@ -26,10 +27,12 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ThemeProvider>
-          <TasksProvider>
-            {children}
-            <Toaster />
-          </TasksProvider>
+          <AuthProvider>
+            <TasksProvider>
+              {children}
+              <Toaster />
+            </TasksProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

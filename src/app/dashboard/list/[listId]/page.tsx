@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useContext } from 'react';
+import { useState, useMemo, useContext, useEffect } from 'react';
 import type { Task } from '@/lib/types';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -20,14 +20,31 @@ import { TaskItem } from '@/components/TaskItem';
 import { AIAssistant } from '@/components/AIAssistant';
 import Link from 'next/link';
 import { TasksContext } from '@/context/TasksContext';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 
 export default function ListDetailPage({ params }: { params: { listId: string } }) {
   const { lists, ...taskHandlers } = useContext(TasksContext);
   const [newTaskText, setNewTaskText] = useState('');
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   const list = useMemo(() => lists.find((l) => l.id === params.listId), [lists, params.listId]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   if (!list) {
     return notFound();
@@ -119,7 +136,6 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
                       task={task}
                       level={0}
                       listId={params.listId}
-                      {...taskHandlers}
                     />
                   ))
                 ) : (

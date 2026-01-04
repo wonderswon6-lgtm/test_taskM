@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useEffect } from 'react';
 import type { TaskList, Task } from '@/lib/types';
 import {
   Briefcase,
@@ -13,12 +13,18 @@ import {
   Plus,
   BookOpen,
   ShoppingCart,
+  LogOut,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import Link from 'next/link';
 import { TasksContext } from '@/context/TasksContext';
 import { AddListDialog } from '@/components/AddListDialog';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const iconMap: { [key: string]: React.ElementType } = {
   List,
@@ -71,18 +77,40 @@ function TaskListCard({ list }: { list: TaskList }) {
 
 export default function DashboardPage() {
   const { lists } = useContext(TasksContext);
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+  
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300">
       <main className="container mx-auto p-4 py-8 md:p-8">
         <header className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button className="text-foreground">
-              <Menu className="h-7 w-7" />
-            </button>
             <h1 className="text-4xl font-bold tracking-tight">Lists</h1>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Avatar>
+              <AvatarImage src={user.avatarUrl} />
+              <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <Button variant="ghost" size="icon" onClick={logout}>
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
