@@ -35,27 +35,23 @@ export function ReminderDialog({
   onSetReminder,
   initialDate,
 }: ReminderDialogProps) {
-  const [date, setDate] = useState<Date | undefined>(
-    initialDate ? new Date(initialDate) : new Date()
-  );
-  const [hour, setHour] = useState<string>(
-    initialDate ? format(new Date(initialDate), 'HH') : '09'
-  );
-  const [minute, setMinute] = useState<string>(
-    initialDate ? format(new Date(initialDate), 'mm') : '00'
-  );
+  const [date, setDate] = useState<Date | undefined>();
+  const [hour, setHour] = useState<string>('09');
+  const [minute, setMinute] = useState<string>('00');
 
   useEffect(() => {
-    if (initialDate) {
-      const d = new Date(initialDate);
-      setDate(d);
-      setHour(format(d, 'HH'));
-      setMinute(format(d, 'mm'));
-    } else {
-      const now = new Date();
-      setDate(now);
-      setHour(format(now, 'HH'));
-      setMinute('00');
+    if (open) {
+      if (initialDate) {
+        const d = new Date(initialDate);
+        setDate(d);
+        setHour(format(d, 'HH'));
+        setMinute(format(d, 'mm'));
+      } else {
+        const now = new Date();
+        setDate(now);
+        setHour(format(now, 'HH'));
+        setMinute('00');
+      }
     }
   }, [initialDate, open]);
 
@@ -90,6 +86,7 @@ export function ReminderDialog({
             selected={date}
             onSelect={handleDateSelect}
             className="rounded-md border"
+            disabled={(d) => d < new Date(new Date().toDateString())}
           />
           <div className="flex items-center gap-2">
             <Select value={hour} onValueChange={setHour}>
