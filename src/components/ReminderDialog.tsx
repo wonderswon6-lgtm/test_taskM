@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { setHours, setMinutes, format } from 'date-fns';
+import { setHours, setMinutes, format, getHours, getMinutes } from 'date-fns';
 
 interface ReminderDialogProps {
   open: boolean;
@@ -41,17 +41,13 @@ export function ReminderDialog({
 
   useEffect(() => {
     if (open) {
-      if (initialDate) {
-        const d = new Date(initialDate);
-        setDate(d);
-        setHour(format(d, 'HH'));
-        setMinute(format(d, 'mm'));
-      } else {
-        const now = new Date();
-        setDate(now);
-        setHour(format(now, 'HH'));
-        setMinute('00');
-      }
+      const initial = initialDate ? new Date(initialDate) : new Date();
+      setDate(initial);
+      setHour(format(initial, 'HH'));
+      // Round minutes to nearest 5
+      const initialMinutes = getMinutes(initial);
+      const roundedMinute = Math.round(initialMinutes / 5) * 5;
+      setMinute(roundedMinute.toString().padStart(2, '0'));
     }
   }, [initialDate, open]);
 
@@ -68,9 +64,11 @@ export function ReminderDialog({
     if(selectedDate) {
         const originalDate = date || new Date();
         const newDate = new Date(selectedDate);
-        newDate.setHours(originalDate.getHours());
-        newDate.setMinutes(originalDate.getMinutes());
+        newDate.setHours(getHours(originalDate));
+        newDate.setMinutes(getMinutes(originalDate));
         setDate(newDate);
+    } else {
+        setDate(undefined);
     }
   }
 
