@@ -21,7 +21,7 @@ import {
 import { doc, setDoc } from 'firebase/firestore';
 import { useFirebase, useUser } from '@/firebase';
 
-interface User {
+export interface User {
   id: string;
   email: string | null;
   avatarUrl?: string;
@@ -93,10 +93,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handleRedirectResult = async () => {
       if (auth && firestore) {
+        setLoading(true);
         try {
           const result = await getRedirectResult(auth);
           if (result) {
-            setLoading(true);
             const userRef = doc(firestore, 'users', result.user.uid);
             await setDoc(
               userRef,
@@ -127,6 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Auth service not available or email/password missing.');
     }
     await signInWithEmailAndPassword(auth, email, password);
+    sessionStorage.removeItem('hasWelcomed');
   };
 
   const signup = async (email?: string, password?: string) => {
@@ -142,7 +143,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
     const user = userCredential.user;
 
-    // Create a user profile in Firestore
     const userRef = doc(firestore, 'users', user.uid);
     const displayName = user.email?.split('@')[0] || 'New User';
     await setDoc(userRef, {
@@ -151,10 +151,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       displayName: displayName,
     });
 
-    // Also update the auth profile
     await updateProfile(user, {
         displayName: displayName,
     });
+    sessionStorage.removeItem('hasWelcomed');
   };
 
   const loginWithGoogle = async () => {
@@ -162,6 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Auth service not available.');
     }
     const provider = new GoogleAuthProvider();
+    sessionStorage.removeItem('hasWelcomed');
     await signInWithRedirect(auth, provider);
   };
 
@@ -171,6 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     await signOut(auth);
     setUser(null);
+    sessionStorage.removeItem('hasWelcomed');
     router.push('/login');
   };
 

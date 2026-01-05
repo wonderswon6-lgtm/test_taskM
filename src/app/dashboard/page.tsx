@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useMemo, useEffect } from 'react';
+import { useContext, useMemo, useEffect, useState } from 'react';
 import type { TaskList, Task } from '@/lib/types';
 import {
   Briefcase,
@@ -20,11 +20,11 @@ import Link from 'next/link';
 import { TasksContext } from '@/context/TasksContext';
 import { AddListDialog } from '@/components/AddListDialog';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, type User } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
+import { WelcomePopup } from '@/components/WelcomePopup';
 
 const iconMap: { [key: string]: React.ElementType } = {
   List,
@@ -84,9 +84,22 @@ export default function DashboardPage() {
   const loading = auth?.loading;
   const logout = auth?.logout;
 
+  const [showWelcome, setShowWelcome] = useState(false);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    }
+    if (!loading && user) {
+        // Only show the welcome message once per session
+        const hasWelcomed = sessionStorage.getItem('hasWelcomed');
+        if (!hasWelcomed) {
+            setShowWelcome(true);
+            sessionStorage.setItem('hasWelcomed', 'true');
+            setTimeout(() => {
+                setShowWelcome(false);
+            }, 2500); // Hide after 2.5 seconds
+        }
     }
   }, [user, loading, router]);
   
@@ -109,6 +122,7 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300">
+      <WelcomePopup user={user} show={showWelcome} />
       <main className="container mx-auto p-4 py-8 md:p-8">
         <header className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
