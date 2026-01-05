@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb, X, PartyPopper } from 'lucide-react';
 import { Button } from './ui/button';
@@ -33,7 +32,6 @@ const GuideAvatarCharacter = () => (
         />
       </radialGradient>
     </defs>
-    <circle cx="50" cy="50" r="40" fill="url(#grad1)" />
     <motion.g
       animate={{
         translateY: ['0px', '-2px', '0px'],
@@ -95,6 +93,7 @@ export function GuideAvatar({
   const [messageKey, setMessageKey] = useState<MessageKey | null>(null);
   const [show, setShow] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const prevCompletedTasks = useRef(completedTasks);
 
   useEffect(() => {
     // Show welcome message on first load if not dismissed this session
@@ -119,11 +118,11 @@ export function GuideAvatar({
   }, [totalTasks]);
   
   useEffect(() => {
-    const prevCompleted = sessionStorage.getItem('completedTasks') || '0';
-    if (completedTasks > parseInt(prevCompleted)) {
+    if (completedTasks > prevCompletedTasks.current) {
       setMessageKey('taskCompleted');
+      setIsDismissed(false); // Reshow if it was dismissed
     }
-    sessionStorage.setItem('completedTasks', completedTasks.toString());
+    prevCompletedTasks.current = completedTasks;
   }, [completedTasks]);
 
   useEffect(() => {
@@ -136,12 +135,14 @@ export function GuideAvatar({
     setShow(true);
     const timer = setTimeout(() => {
       setShow(false);
+      // Prevent the same message from re-appearing on state changes unless triggered again
+      setMessageKey(null);
     }, 6000); // Hide after 6 seconds
     
     return () => clearTimeout(timer);
   }, [messageKey, isDismissed]);
 
-  if (isDismissed) return null;
+  if (isDismissed && !show) return null;
 
   const currentMessage = messageKey ? messages[messageKey] : null;
   const Icon = currentMessage?.icon;
@@ -177,8 +178,7 @@ export function GuideAvatar({
         whileTap={{ scale: 0.9 }}
         className="mt-2 cursor-pointer"
         onClick={() => {
-            setIsDismissed(false); // Reshow on click if dismissed
-            setMessageKey(messageKey); // Trigger re-show
+            setIsDismissed(current => !current); 
         }}
       >
         <GuideAvatarCharacter />
