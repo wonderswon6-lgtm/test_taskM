@@ -80,9 +80,7 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
   const { deleteList } = useTasks();
   const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDelete = () => {
     deleteList(list.id);
   };
 
@@ -103,21 +101,21 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
                   variant="ghost" 
                   size="icon" 
                   className="h-8 w-8 text-muted-foreground"
-                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
               </EditListDialog>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-muted-foreground"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </AlertDialogTrigger>
                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                   <AlertDialogHeader>
@@ -128,7 +126,7 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
