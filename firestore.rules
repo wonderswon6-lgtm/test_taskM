@@ -114,7 +114,7 @@ service cloud.firestore {
      * a list from being reassigned to a different owner.
      */
     function isListOwnerImmutable() {
-      return request.resource.data.userId == resource.data.id;
+      return request.resource.data.userId == resource.data.userId;
     }
     
 
