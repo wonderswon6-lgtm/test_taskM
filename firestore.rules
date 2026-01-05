@@ -1,151 +1,181 @@
 /**
- * @file firestore.rules
- * @description Firestore Security Rules for the TaskFlow application.
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. All data, including
+ * tasks and subtasks, is stored in a hierarchical structure under a user's
+ * unique ID (`/users/{userId}`). This ensures that users can only ever access
+ * their own data tree, providing strong data isolation by default.
  *
- * @section Core Philosophy
- * This ruleset enforces a strict user-ownership model. All data is considered
- * private and is accessible only by the user who created it. There are no
- * public or shared collections. The default security posture is to deny all
- * access unless explicitly granted to the document owner.
+ * Data Structure:
+ * The data is organized hierarchically to reflect ownership:
+ * - /users/{userId}: Stores the user's profile document.
+ * - /users/{userId}/tasks/{taskId}: Stores tasks owned by the user.
+ * - /users/{userId}/tasks/{taskId}/subtasks/{subtaskId}: Stores subtasks
+ *   belonging to a specific task.
  *
- * @section Data Structure
- * All application data is nested under the `/users/{userId}` path. This
- * hierarchical structure ensures that every document (Task, Subtask) is
- * inherently and unambiguously tied to a specific user, simplifying security
- * logic significantly.
- *   - /users/{userId}/tasks/{taskId}
- *   - /users/{userId}/tasks/{taskId}/subtasks/{subtaskId}
+ * Key Security Decisions:
+ * - Strict Ownership: All read and write operations are restricted to the
+ *   authenticated user whose UID matches the `{userId}` in the path.
+ * - No Public Access: There are no publicly readable collections.
+ * - User Enumeration Disabled: Listing the top-level `/users` collection
+ *   is explicitly forbidden to prevent attackers from discovering user IDs.
+ * - Self-Creation: A user can create their own profile document in `/users`
+ *   but cannot create one for anyone else.
  *
- * @section Key Security Decisions
- * - User Data Privacy: All collections are private. Users can only access
- *   documents within their own data tree (i.e., under their own `/users/{userId}` path).
- * - No User Listing: It is impossible to list documents in the top-level `/users`
- *   collection, protecting user privacy.
- * - Path-Based Security: Authorization is based entirely on the `{userId}`
- *   wildcard in the document path, which is fast, secure, and cost-effective.
- * - No Cross-User Access: There are no provisions for admins, collaborators,
- *   or any form of cross-user data access.
+ * Denormalization for Authorization:
+ * This ruleset relies on path-based security. The user's UID is part of the
+ * document path for all their associated data. This allows for extremely fast
+ * and simple authorization checks (`request.auth.uid == userId`) without
+ * needing to read any document data (i.e., no `get()` calls). For relational
+ * integrity, key IDs (like `userId` and `taskId`) are also stored inside
+ * documents to ensure data consistency upon creation and to prevent re-linking
+ * on updates.
  *
- * @section Denormalization for Authorization
- * This ruleset's security model is built on path-based ownership. By placing all
- * of a user's data within a `/users/{userId}` document tree, the user's ID
- * is denormalized into the path of every document. This is the most efficient
- * way to write security rules, as it avoids slow and costly `get()` or `exists()`
- * calls to other documents to verify ownership.
- *
- * @section Structural Segregation
- * Tasks and their corresponding Subtasks are stored in separate, nested
- * collections. This clean separation ensures that query operations are simple
- * and that security rules can be applied granularly to each data type without
- * ambiguity.
+ * Structural Segregation:
+ * The structure strictly segregates each user's data into their own document
+ * tree. This is the most secure and performant way to handle private user data,
+ * as it makes unauthorized list queries impossible.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // -------------------------------------------------------------------------
-    // Helper Functions
-    // -------------------------------------------------------------------------
-
+    // Helper functions for improved readability and reuse.
+    
     /**
-     * @description Checks if a user is authenticated.
+     * Checks if the user is authenticated.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the currently authenticated user is the owner of
-     * a document, based on the userId provided in the path.
+     * Checks if the currently authenticated user's ID matches the
+     * provided userId from the path. This is the core of our
+     * ownership-based security model.
+     * @param userId The UID of the document owner from the path.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Validates incoming Task data on create operations.
-     * Ensures the document's internal ID matches the document's path ID.
+     * Ensures an operation is performed by the owner on an existing document.
+     * Crucial for secure update and delete operations.
+     * @param userId The UID of the document owner from the path.
      */
-    function hasValidTaskCreateData(taskId) {
-      return request.resource.data.id == taskId;
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Validates incoming Task data on update operations.
-     * Enforces immutability of the document's internal ID.
+     * Validates that the User document's internal `id` field matches the
+     * document's ID in the path upon creation.
+     * @param userId The UID of the user from the path.
      */
-    function hasValidTaskUpdateData() {
-      // The internal ID must never be changed after creation.
+    function hasValidUserDataOnCreate(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * Enforces that the User document's internal `id` field is immutable.
+     * It cannot be changed after the document is created.
+     */
+    function isUserDataImmutable() {
       return request.resource.data.id == resource.data.id;
     }
 
     /**
-     * @description Validates incoming Subtask data on create operations.
-     * Ensures internal IDs for the subtask and its parent task match the path.
+     * Validates that a new Task document's internal `userId` field matches
+     * the user's ID in the path.
+     * @param userId The UID of the user from the path.
      */
-    function hasValidSubtaskCreateData(taskId, subtaskId) {
-      let incomingData = request.resource.data;
-      return incomingData.id == subtaskId && incomingData.taskId == taskId;
+    function hasValidTaskDataOnCreate(userId) {
+      return request.resource.data.userId == userId;
     }
 
     /**
-     * @description Validates incoming Subtask data on update operations.
-     * Enforces immutability of the subtask and parent task IDs.
+     * Enforces that a Task document's `userId` is immutable, preventing
+     * a task from being reassigned to a different owner.
      */
-    function hasValidSubtaskUpdateData() {
-      // The internal ID and parent taskId must never be changed.
-      let incomingData = request.resource.data;
-      let existingData = resource.data;
-      return incomingData.id == existingData.id && incomingData.taskId == existingData.taskId;
+    function isTaskOwnerImmutable() {
+      return request.resource.data.userId == resource.data.id;
+    }
+    
+    /**
+     * Validates that a new SubTask document's internal `taskId` field matches
+     * the parent task's ID from the path.
+     * @param taskId The ID of the parent task from the path.
+     */
+    function hasValidSubTaskDataOnCreate(taskId) {
+      return request.resource.data.taskId == taskId;
     }
 
-    // -------------------------------------------------------------------------
-    // User-Scoped Collections
-    // -------------------------------------------------------------------------
+    /**
+     * Enforces that a SubTask's `taskId` is immutable, preventing it from
+     * being moved to a different parent task.
+     */
+    function isSubTaskParentImmutable() {
+      return request.resource.data.taskId == resource.data.id;
+    }
 
+    /**
+     * @description
+     *   Rules for the user profile documents. Each user has one document where
+     *   the document ID is their Firebase Authentication UID.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user creating their own profile document.
+     *   e.g., `db.collection('users').doc('user_abc').set({ id: 'user_abc', ... })` by user 'user_abc'.
+     * @deny (create) A user trying to create a profile for someone else.
+     *   e.g., `db.collection('users').doc('user_xyz').set(...)` by user 'user_abc'.
+     * @principle
+     *   Enforces self-creation and ownership. Prevents user enumeration by
+     *   disallowing list operations on the top-level collection.
+     */
     match /users/{userId} {
-      /**
-       * @description A user document is not defined in the schema, so this path
-       * serves only as a container for user-owned subcollections. Direct
-       * access to a user document is disallowed to prevent enumeration and
-       * accidental creation of empty user documents.
-       * @path /users/{userId}
-       * @allow (none)
-       * @deny (any) An unauthenticated user tries to read `/users/user123`.
-       * @principle Prevents access to the root user document, enforcing that
-       * this path is only a grouping mechanism for subcollections.
-       */
-      allow read, write: if false;
+      allow get: if isOwner(userId);
+      allow list: if false; // Prevent user enumeration
+      allow create: if isOwner(userId) && hasValidUserDataOnCreate(userId);
+      allow update: if isExistingOwner(userId) && isUserDataImmutable();
+      allow delete: if isExistingOwner(userId);
 
       /**
-       * @description Secures the `tasks` collection for a specific user. Only the
-       * authenticated owner of the data can perform any action on their own tasks.
+       * @description
+       *   Rules for the tasks collection, which is nested under each user.
+       *   Access is strictly limited to the owner of the parent user document.
        * @path /users/{userId}/tasks/{taskId}
-       * @allow (create) User 'user123' creates a task at `/users/user123/tasks/taskABC`.
-       * @deny (get) User 'user456' attempts to read `/users/user123/tasks/taskABC`.
-       * @principle Restricts all access to a user's own private data tree.
+       * @allow (list) A user listing their own tasks.
+       *   e.g., `db.collection('users/user_abc/tasks').get()` by user 'user_abc'.
+       * @deny (get) A user trying to read a task belonging to another user.
+       *   e.g., `db.doc('users/user_xyz/tasks/task_123').get()` by user 'user_abc'.
+       * @principle
+       *   Restricts access to a user's own data tree through path-based security.
        */
       match /tasks/{taskId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasValidTaskCreateData(taskId);
-        allow update: if isOwner(userId) && resource != null && hasValidTaskUpdateData();
-        allow delete: if isOwner(userId) && resource != null;
-      }
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && hasValidTaskDataOnCreate(userId);
+        allow update: if isExistingOwner(userId) && isTaskOwnerImmutable();
+        allow delete: if isExistingOwner(userId);
 
-      /**
-       * @description Secures the `subtasks` subcollection. Access is granted based
-       * on the ownership of the parent user document, not the task document.
-       * @path /users/{userId}/tasks/{taskId}/subtasks/{subtaskId}
-       * @allow (update) User 'user123' updates a subtask at `/users/user123/tasks/taskABC/subtasks/subXYZ`.
-       * @deny (delete) User 'user456' attempts to delete `/users/user123/tasks/taskABC/subtasks/subXYZ`.
-       * @principle Inherits ownership from the top-level user, ensuring consistent
-       * security throughout the nested data structure.
-       */
-      match /tasks/{taskId}/subtasks/{subtaskId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasValidSubtaskCreateData(taskId, subtaskId);
-        allow update: if isOwner(userId) && resource != null && hasValidSubtaskUpdateData();
-        allow delete: if isOwner(userId) && resource != null;
+        /**
+         * @description
+         *   Rules for the subtasks collection, nested under a specific task.
+         *   Access inherits the ownership context from the top-level user.
+         * @path /users/{userId}/tasks/{taskId}/subtasks/{subtaskId}
+         * @allow (create) A user creating a subtask under their own task.
+         *   e.g., `db.doc('users/user_abc/tasks/task_123/subtasks/sub_456').set(...)` by user 'user_abc'.
+         * @deny (update) A user trying to update a subtask belonging to another user.
+         *   e.g., `db.doc('users/user_xyz/tasks/task_123/subtasks/sub_456').update(...)` by user 'user_abc'.
+         * @principle
+         *   Enforces deep, hierarchical ownership. Validates relational integrity to the parent task.
+         */
+        match /subtasks/{subtaskId} {
+          allow get: if isOwner(userId);
+          allow list: if isOwner(userId);
+          allow create: if isOwner(userId) && hasValidSubTaskDataOnCreate(taskId);
+          allow update: if isExistingOwner(userId) && isSubTaskParentImmutable();
+          allow delete: if isExistingOwner(userId);
+        }
       }
     }
   }
