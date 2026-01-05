@@ -74,7 +74,7 @@ export default function SignupPage() {
             TaskFlow
           </h1>
           <p className="mt-4 max-w-md text-lg">
-            Organize Your Life, One Task at a Time.
+            Streamline your workflow and enhance productivity. Your journey to organized success starts here.
           </p>
         </div>
         <div className="flex items-center justify-center p-4">
@@ -110,6 +110,7 @@ export default function SignupPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
+                    suppressHydrationWarning
                   />
                 </div>
                 <Button className="w-full" type="submit" disabled={loading}>
