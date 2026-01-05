@@ -91,6 +91,11 @@ export default function DashboardPage() {
 
   const [showWelcome, setShowWelcome] = useState(false);
 
+  const { total: totalTasks, completed: completedTasks } = useMemo(() => {
+    const allTasks = lists.flatMap(list => list.tasks);
+    return countTasks(allTasks);
+  }, [lists]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -124,11 +129,6 @@ export default function DashboardPage() {
     }
     return name.substring(0, 2);
   }
-
-  const { total: totalTasks, completed: completedTasks } = useMemo(() => {
-    const allTasks = lists.flatMap(list => list.tasks);
-    return countTasks(allTasks);
-  }, [lists]);
 
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300">
