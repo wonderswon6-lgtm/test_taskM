@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,12 +17,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { GoogleIcon } from '@/components/GoogleIcon';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const auth = useAuth();
   const { toast } = useToast();
+  
+  const authBackgroundImage = PlaceHolderImages.find(p => p.id === 'auth-background');
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +41,7 @@ export default function SignupPage() {
       });
     }
   };
-  
+
   const handleGoogleLogin = async () => {
     if (!auth) return;
     try {
@@ -53,72 +58,99 @@ export default function SignupPage() {
   const loading = auth?.loading;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>
-            Get started with TaskFlow for free.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSignup}>
-          <CardContent className="grid gap-4">
-            <Button variant="outline" type="button" onClick={handleGoogleLogin} disabled={loading}>
-                {/* Add a Google Icon here if you have one */}
-                Sign up with Google
-            </Button>
-            <div className="relative">
-                <div className="absolute inset-0 flex items-center">
+    <div className="relative min-h-screen w-full">
+      {authBackgroundImage && (
+        <Image
+          src={authBackgroundImage.imageUrl}
+          alt={authBackgroundImage.description}
+          fill
+          className="object-cover"
+          data-ai-hint={authBackgroundImage.imageHint}
+        />
+      )}
+      <div className="relative z-10 grid min-h-screen grid-cols-1 bg-black/20 lg:grid-cols-2">
+        <div className="hidden flex-col justify-center p-12 text-white lg:flex">
+          <h1 className="font-headline text-5xl font-bold">
+            TaskFlow
+          </h1>
+          <p className="mt-4 max-w-md text-lg">
+            Organize Your Life, One Task at a Time.
+          </p>
+        </div>
+        <div className="flex items-center justify-center p-4">
+          <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-2xl">Create an Account</CardTitle>
+              <CardDescription>
+                Get started with TaskFlow for free.
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSignup}>
+              <CardContent className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="********"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                <Button className="w-full" type="submit" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Create Account
+                </Button>
+                 <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      or
                     </span>
+                  </div>
                 </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button className="w-full" type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Account
-            </Button>
-            <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <Link
+                 <Button
+                  variant="outline"
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                >
+                  <GoogleIcon className="mr-2 h-4 w-4" />
+                  Sign up with Google
+                </Button>
+              </CardContent>
+              <CardFooter className="flex justify-center">
+                <p className="text-center text-sm text-muted-foreground">
+                  Already have an account?{' '}
+                  <Link
                     href="/login"
                     className="font-medium text-primary underline-offset-4 hover:underline"
-                >
+                  >
                     Sign in
-                </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+                  </Link>
+                </p>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
