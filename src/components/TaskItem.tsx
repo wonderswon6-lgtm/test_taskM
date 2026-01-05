@@ -21,7 +21,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TasksContext } from '@/context/TasksContext';
-import { format } from 'date-fns';
+import { format, isToday, isPast, isTomorrow } from 'date-fns';
 
 type TaskItemProps = {
   task: Task;
@@ -84,6 +84,23 @@ export function TaskItem({
     }
   };
 
+  const formattedDueDate = () => {
+    if (!task.dueDate) return null;
+    const date = new Date(task.dueDate);
+    if (isToday(date)) return 'Today';
+    if (isTomorrow(date)) return 'Tomorrow';
+    if (isPast(date) && !isToday(date)) return `Overdue`;
+    return format(date, 'MMM d');
+  };
+
+  const dueDateColor = () => {
+    if (!task.dueDate) return 'text-muted-foreground';
+    const date = new Date(task.dueDate);
+    if (isToday(date)) return 'text-blue-500 font-semibold';
+    if (isPast(date)) return 'text-destructive font-semibold';
+    return 'text-muted-foreground';
+  }
+
   return (
     <motion.div
       layout
@@ -132,8 +149,8 @@ export function TaskItem({
         )}
 
         {task.dueDate && (
-          <span className="text-xs text-muted-foreground">
-            {format(new Date(task.dueDate), 'MMM d')}
+          <span className={cn("text-xs", dueDateColor())}>
+            {formattedDueDate()}
           </span>
         )}
 
