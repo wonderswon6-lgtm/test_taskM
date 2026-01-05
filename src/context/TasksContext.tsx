@@ -176,14 +176,27 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     async (listId: string) => {
       if (!firestore || !user || listId === 'all') return;
       
-      const listDocRef = doc(firestore, 'users', user.uid, 'lists', listId);
-      deleteDocumentNonBlocking(listDocRef);
-
-      // Also delete all tasks associated with this list
-      const tasksToDelete = (tasksData || []).filter(t => t.listId === listId);
-      for (const task of tasksToDelete) {
+      try {
+        // Find all tasks associated with this list
+        const tasksToDelete = (tasksData || []).filter(t => t.listId === listId);
+        
+        // Create an array of promises for each task deletion
+        const deletePromises = tasksToDelete.map(task => {
           const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', task.id);
-          deleteDocumentNonBlocking(taskDocRef);
+          // We don't use the non-blocking version here because we need to await the result
+          return deleteDoc(taskDocRef);
+        });
+
+        // Wait for all task deletions to complete
+        await Promise.all(deletePromises);
+
+        // After all tasks are deleted, delete the list document itself
+        const listDocRef = doc(firestore, 'users', user.uid, 'lists', listId);
+        await deleteDoc(listDocRef);
+
+      } catch (error) {
+          console.error("Error deleting list and its tasks:", error);
+          // Optionally, emit a global error or show a toast to the user
       }
     },
     [firestore, user, tasksData]
