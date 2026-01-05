@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect }from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { setHours, setMinutes, format, getHours, getMinutes } from 'date-fns';
+import { setHours, setMinutes, format, getHours, getMinutes, parseISO } from 'date-fns';
 
 interface ReminderDialogProps {
   open: boolean;
@@ -36,6 +36,7 @@ export function ReminderDialog({
   initialDate,
 }: ReminderDialogProps) {
   const [date, setDate] = useState<Date | undefined>();
+  const [dateString, setDateString] = useState<string>('');
   const [hour, setHour] = useState<string>('09');
   const [minute, setMinute] = useState<string>('00');
 
@@ -43,6 +44,7 @@ export function ReminderDialog({
     if (open) {
       const initial = initialDate ? new Date(initialDate) : new Date();
       setDate(initial);
+      setDateString(format(initial, 'yyyy-MM-dd'));
       setHour(format(initial, 'HH'));
       // Round minutes to nearest 5
       const initialMinutes = getMinutes(initial);
@@ -60,17 +62,20 @@ export function ReminderDialog({
     }
   };
   
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    if(selectedDate) {
+  const handleDateSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDateString = e.target.value;
+    setDateString(newDateString);
+    // The time zone offset is important to avoid off-by-one day errors.
+    const newDate = parseISO(newDateString);
+    
+    if (!isNaN(newDate.getTime())) {
         const originalDate = date || new Date();
-        const newDate = new Date(selectedDate);
         newDate.setHours(getHours(originalDate));
         newDate.setMinutes(getMinutes(originalDate));
         setDate(newDate);
-    } else {
-        setDate(undefined);
     }
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,13 +83,13 @@ export function ReminderDialog({
         <DialogHeader>
           <DialogTitle>Set Reminder</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center gap-4">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={handleDateSelect}
-            className="rounded-md border"
-            disabled={(d) => d < new Date(new Date().toDateString())}
+        <div className="flex flex-col items-center gap-4 py-4">
+          <Input 
+            type="date"
+            value={dateString}
+            onChange={handleDateSelect}
+            className="w-full"
+            min={format(new Date(), 'yyyy-MM-dd')}
           />
           <div className="flex items-center gap-2">
             <Select value={hour} onValueChange={setHour}>
