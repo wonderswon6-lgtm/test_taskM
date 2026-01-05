@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { WelcomePopup } from '@/components/WelcomePopup';
+import { GuideAvatar } from '@/components/GuideAvatar';
 
 const iconMap: { [key: string]: React.ElementType } = {
   List,
@@ -120,6 +121,10 @@ export default function DashboardPage() {
     return name.substring(0, 2);
   }
 
+  const allTasks = lists.flatMap(list => list.tasks);
+  const totalTasks = allTasks.length;
+  const completedTasks = allTasks.filter(task => task.completed).length;
+
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300">
       <WelcomePopup user={user} show={showWelcome} />
@@ -147,11 +152,12 @@ export default function DashboardPage() {
         </div>
       </main>
       <AddListDialog>
-        <button className="fixed bottom-8 right-8 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110">
+        <button className="fixed bottom-8 right-8 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 z-30">
           <Plus className="h-8 w-8" />
           <span className="sr-only">Add new list</span>
         </button>
       </AddListDialog>
+      <GuideAvatar totalTasks={totalTasks} completedTasks={completedTasks} />
     </div>
   );
 }
