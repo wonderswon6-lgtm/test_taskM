@@ -1,5 +1,26 @@
-# Firebase Studio
+# 📝 To-Do Application
 
-This is a NextJS starter in Firebase Studio.
+A simple and user-friendly **To-Do Application** to help users manage tasks efficiently, stay organized, and improve productivity.
 
-To get started, take a look at src/app/page.tsx.
+---
+
+## 🚀 Features
+
+- ✅ Add, edit, and delete tasks
+- 📋 Organize tasks into lists
+- 🔒 User authentication
+- ☁️ Cloud-based data storage
+- ⚡ Fast and responsive UI
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React / Next.js
+- **Backend:** Firebase / Supabase / FastAPI
+- **Database:** Firestore / PostgreSQL
+- **Styling:** CSS / Tailwind CSS
+
+Acknowledgement
+
+Built with love with the help of CipherSchools ❤️
