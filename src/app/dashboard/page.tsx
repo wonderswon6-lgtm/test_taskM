@@ -60,8 +60,8 @@ function TaskListCard({ list }: { list: TaskList }) {
   const Icon = iconMap[list.icon] || List;
 
   return (
-    <div className="group block h-full">
-      <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all flex flex-col h-full">
+    <Link href={`/dashboard/list/${list.id}`} className="group block h-full">
+      <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-lg flex flex-col h-full">
         {incompleteTasks > 0 && (
           <Badge variant="destructive" className="absolute top-2 right-2">
             {incompleteTasks}
@@ -79,7 +79,7 @@ function TaskListCard({ list }: { list: TaskList }) {
             </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
