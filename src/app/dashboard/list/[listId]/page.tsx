@@ -24,7 +24,8 @@ import { notFound, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 
-export default function ListDetailPage({ params: { listId } }: { params: { listId: string } }) {
+export default function ListDetailPage({ params }: { params: { listId: string } }) {
+  const { listId } = params;
   const { lists, ...taskHandlers } = useContext(TasksContext);
   const [newTaskText, setNewTaskText] = useState('');
   const auth = useAuth();
