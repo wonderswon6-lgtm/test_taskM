@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SuggestRelatedTasksInputSchema = z.object({
+  listName: z.string().describe('The name of the task list.'),
   taskList: z
     .array(z.string())
     .describe('The current list of tasks for which to suggest related tasks.'),
@@ -35,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'suggestRelatedTasksPrompt',
   input: {schema: SuggestRelatedTasksInputSchema},
   output: {schema: SuggestRelatedTasksOutputSchema},
-  prompt: `You are a helpful task management assistant. Given the following list of tasks, suggest additional related tasks that would help the user comprehensively cover all aspects of their project.\n\nCurrent Tasks:\n{{#each taskList}}- {{this}}\n{{/each}}\n\nSuggested Tasks:\n`,
+  prompt: `You are a helpful task management assistant. You are helping a user with a task list named '{{listName}}'. Given the following list of tasks, suggest additional related tasks that would help the user comprehensively cover all aspects of their project.\n\nCurrent Tasks:\n{{#each taskList}}- {{this}}\n{{/each}}\n\nSuggested Tasks:\n`,
 });
 
 const suggestRelatedTasksFlow = ai.defineFlow(
