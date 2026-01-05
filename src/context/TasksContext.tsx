@@ -176,12 +176,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     async (listId: string) => {
       if (!firestore || !user || listId === 'all') return;
       
-      const docRef = doc(firestore, 'users', user.uid, 'lists', listId);
-      deleteDocumentNonBlocking(docRef);
+      const listDocRef = doc(firestore, 'users', user.uid, 'lists', listId);
+      deleteDocumentNonBlocking(listDocRef);
 
       // Also delete all tasks associated with this list
-      const tasksInList = (tasksData || []).filter(t => t.listId === listId);
-      for (const task of tasksInList) {
+      const tasksToDelete = (tasksData || []).filter(t => t.listId === listId);
+      for (const task of tasksToDelete) {
           const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', task.id);
           deleteDocumentNonBlocking(taskDocRef);
       }
