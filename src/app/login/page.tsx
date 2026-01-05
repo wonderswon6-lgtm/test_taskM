@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
@@ -42,11 +42,19 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Welcome Back!</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your task dashboard.
-          </CardDescription>
+        <CardHeader className="relative">
+          <div>
+            <CardTitle className="text-2xl">Welcome Back!</CardTitle>
+            <CardDescription>
+              Enter your credentials to access your task dashboard.
+            </CardDescription>
+          </div>
+          <Link href="/" passHref legacyBehavior>
+            <Button variant="ghost" size="icon" className="absolute top-4 right-4">
+              <Home className="h-5 w-5" />
+              <span className="sr-only">Go to Home</span>
+            </Button>
+          </Link>
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="grid gap-4">
