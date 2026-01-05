@@ -80,7 +80,9 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
   const { deleteList } = useTasks();
   const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     deleteList(list.id);
   };
 
@@ -107,11 +109,12 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
                 </Button>
               </EditListDialog>
               <AlertDialog>
-                <AlertDialogTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                <AlertDialogTrigger asChild>
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className="h-8 w-8 text-muted-foreground"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

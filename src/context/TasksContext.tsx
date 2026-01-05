@@ -16,6 +16,9 @@ import {
   collection,
   doc,
   deleteDoc,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import {
     setDocumentNonBlocking,
@@ -39,7 +42,7 @@ interface TasksContextType {
   allTasks: Task[];
   isLoading: boolean;
   addList: (name: string, icon: string) => void;
-  deleteList: (listId: string) => void;
+  deleteList: (listId: string) => Promise<void>;
   renameList: (listId: string, newName: string) => Promise<void>;
   addTask: (listId: string, text: string) => void;
   addSubtask: (listId: string, parentId: string, text: string) => void;
@@ -54,7 +57,7 @@ export const TasksContext = createContext<TasksContextType>({
   allTasks: [],
   isLoading: true,
   addList: () => {},
-  deleteList: () => {},
+  deleteList: async () => {},
   renameList: async () => {},
   addTask: () => {},
   addSubtask: () => {},
@@ -176,29 +179,24 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       if (!firestore || !user || listId === 'all') return;
       
       try {
-        // Find all tasks associated with this list
-        const tasksToDelete = (tasksData || []).filter(t => t.listId === listId);
-        
-        // Create an array of promises for each task deletion
-        const deletePromises = tasksToDelete.map(task => {
-          const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', task.id);
-          // Use the SDK's deleteDoc directly, as this function is async.
-          return deleteDoc(taskDocRef);
-        });
+        const userTasksCollection = collection(firestore, 'users', user.uid, 'tasks');
+        const q = query(userTasksCollection, where("listId", "==", listId));
+        const querySnapshot = await getDocs(q);
 
-        // Wait for all task deletions to complete
+        const deletePromises = querySnapshot.docs.map((taskDoc) =>
+          deleteDoc(doc(firestore, 'users', user.uid, 'tasks', taskDoc.id))
+        );
+
         await Promise.all(deletePromises);
 
-        // After all tasks are deleted, delete the list document itself
         const listDocRef = doc(firestore, 'users', user.uid, 'lists', listId);
         await deleteDoc(listDocRef);
 
       } catch (error) {
           console.error("Error deleting list and its tasks:", error);
-          // Optionally, emit a global error or show a toast to the user
       }
     },
-    [firestore, user, tasksData]
+    [firestore, user]
   );
 
   const renameList = useCallback(async (listId: string, newName: string) => {
