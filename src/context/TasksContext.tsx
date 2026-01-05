@@ -124,12 +124,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (user && !isLoadingLists && !isLoadingTasks && !defaultListsCreated.current && listsData?.length === 0 && tasksData?.length === 0) {
       defaultListsCreated.current = true; // Mark as run
 
-      const createDefaultList = async (listName: string) => {
+      const createDefaultList = (listName: string) => {
+        if (!firestore) return;
         try {
-          const iconResult = await generateListIcon({ listName });
-          const svgMatch = iconResult.svg.match(/<svg.*<\/svg>/s);
-          const iconSvg = svgMatch ? svgMatch[0] : defaultIcons[listName] || allTasksList.icon;
-          
+          const iconSvg = defaultIcons[listName] || allTasksList.icon;
           const newListId = uuidv4();
           const listDoc: TaskListType = {
             id: newListId,
@@ -137,20 +135,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
             icon: iconSvg,
             userId: user.uid,
           };
-          const docRef = doc(firestore!, 'users', user.uid, 'lists', newListId);
+          const docRef = doc(firestore, 'users', user.uid, 'lists', newListId);
           setDocumentNonBlocking(docRef, listDoc, { merge: true });
         } catch (error) {
           console.error(`Failed to create default list "${listName}":`, error);
-          // Fallback for AI icon generation failure
-          const newListId = uuidv4();
-          const listDoc: TaskListType = {
-            id: newListId,
-            name: listName,
-            icon: defaultIcons[listName] || allTasksList.icon,
-            userId: user.uid,
-          };
-          const docRef = doc(firestore!, 'users', user.uid, 'lists', newListId);
-          setDocumentNonBlocking(docRef, listDoc, { merge: true });
         }
       };
 
@@ -202,13 +190,20 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const renameList = useCallback(async (listId: string, newName: string) => {
     if (!firestore || !user || !newName.trim()) return;
 
-    const iconInput: GenerateListIconInput = { listName: newName.trim() };
-    const result = await generateListIcon(iconInput);
-    const svgMatch = result.svg.match(/<svg.*<\/svg>/s);
-    const newIcon = svgMatch ? svgMatch[0] : '<svg />'; // Fallback icon
+    try {
+        const iconInput: GenerateListIconInput = { listName: newName.trim() };
+        const result = await generateListIcon(iconInput);
+        const svgMatch = result.svg.match(/<svg.*<\/svg>/s);
+        const newIcon = svgMatch ? svgMatch[0] : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>';
 
-    const docRef = doc(firestore, 'users', user.uid, 'lists', listId);
-    updateDocumentNonBlocking(docRef, { name: newName.trim(), icon: newIcon });
+        const docRef = doc(firestore, 'users', user.uid, 'lists', listId);
+        updateDocumentNonBlocking(docRef, { name: newName.trim(), icon: newIcon });
+    } catch(error) {
+        console.error("Failed to rename list:", error);
+        // Fallback in case of AI failure
+        const docRef = doc(firestore, 'users', user.uid, 'lists', listId);
+        updateDocumentNonBlocking(docRef, { name: newName.trim() });
+    }
   }, [firestore, user]);
 
   const addTask = useCallback(

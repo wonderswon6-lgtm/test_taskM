@@ -76,7 +76,7 @@ export function EditListDialog({ list, children }: EditListDialogProps) {
         <DialogHeader>
           <DialogTitle>Rename List</DialogTitle>
           <DialogDescription>
-            Give your list a new name. A new icon will be generated.
+            Give your list a new name. A new icon may be generated.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">

@@ -37,7 +37,7 @@ export function AddListDialog({ children }: { children: React.ReactNode }) {
         // The API returns an SVG string, often wrapped in markdown.
         // We need to extract the raw SVG.
         const svgMatch = result.svg.match(/<svg.*<\/svg>/s);
-        const svgString = svgMatch ? svgMatch[0] : '<svg />';
+        const svgString = svgMatch ? svgMatch[0] : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>';
 
         addList(listName.trim(), svgString);
         setListName('');
@@ -46,12 +46,9 @@ export function AddListDialog({ children }: { children: React.ReactNode }) {
         console.error('Failed to generate icon:', error);
         toast({
           title: 'Icon Generation Failed',
-          description: 'Could not generate an icon. Using a default.',
+          description: 'Could not generate an icon. Please try again later.',
           variant: 'destructive',
         });
-        // Fallback to a default icon
-        addList(listName.trim(), '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>');
-        setOpen(false);
       } finally {
         setIsGenerating(false);
       }
