@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
@@ -17,15 +17,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { generateBackground } from '@/ai/flows/generate-background-flow';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [backgroundImage, setBackgroundImage] = useState('');
   const auth = useAuth();
   const { toast } = useToast();
-  
-  const authBackgroundImage = PlaceHolderImages.find(p => p.id === 'auth-background');
+
+  useEffect(() => {
+    const fetchBackground = async () => {
+      try {
+        const result = await generateBackground({ prompt: 'A dynamic and abstract background image representing task completion, with faded tick and untick marks, in a blue and white color scheme.' });
+        setBackgroundImage(result.imageUrl);
+      } catch (error) {
+        console.error('Failed to generate background:', error);
+        // Fallback to a default image if generation fails
+        setBackgroundImage('https://images.unsplash.com/photo-1559526324-c1f275fbfa32?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzOTY3MDZ8MHwxfHNlYXJjaHw1fHxwbGFubmluZ3xlbnwwfHx8fDE3MTg3NDYyNDJ8MA&ixlib=rb-4.0.3&q=80&w=1080');
+      }
+    };
+    fetchBackground();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,14 +58,16 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full">
-      {authBackgroundImage && (
+      {backgroundImage ? (
         <Image
-          src={authBackgroundImage.imageUrl}
-          alt={authBackgroundImage.description}
+          src={backgroundImage}
+          alt="AI generated background of tasks"
           fill
           className="object-cover"
-          data-ai-hint={authBackgroundImage.imageHint}
+          data-ai-hint="tasks checklist"
         />
+      ) : (
+        <div className="absolute inset-0 bg-secondary animate-pulse" />
       )}
       <div className="relative z-10 grid min-h-screen grid-cols-1 bg-black/20 lg:grid-cols-2">
         <div className="hidden flex-col justify-center p-12 text-white lg:flex">
