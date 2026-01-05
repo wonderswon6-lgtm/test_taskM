@@ -42,22 +42,24 @@ export function ReminderDialog({
 
   useEffect(() => {
     if (open) {
+      // Defer state update to client-side only
       const initial = initialDate ? new Date(initialDate) : new Date();
       setDate(initial);
       setDateString(format(initial, 'yyyy-MM-dd'));
       setHour(format(initial, 'HH'));
-      // Round minutes to nearest 5
       const initialMinutes = getMinutes(initial);
       const roundedMinute = Math.round(initialMinutes / 5) * 5;
       setMinute(roundedMinute.toString().padStart(2, '0'));
     }
-  }, [initialDate, open]);
+  }, [open, initialDate]);
 
   const handleSetReminder = () => {
-    if (date) {
-      let newDate = setHours(date, parseInt(hour, 10));
-      newDate = setMinutes(newDate, parseInt(minute, 10));
-      onSetReminder(newDate);
+    if (dateString) {
+      // Reconstruct the date from parts to ensure consistency
+      const newDate = parseISO(dateString); // This correctly handles timezone
+      let finalDate = setHours(newDate, parseInt(hour, 10));
+      finalDate = setMinutes(finalDate, parseInt(minute, 10));
+      onSetReminder(finalDate);
       onOpenChange(false);
     }
   };
@@ -65,17 +67,12 @@ export function ReminderDialog({
   const handleDateSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDateString = e.target.value;
     setDateString(newDateString);
-    // The time zone offset is important to avoid off-by-one day errors.
-    const newDate = parseISO(newDateString);
-    
-    if (!isNaN(newDate.getTime())) {
-        const originalDate = date || new Date();
-        newDate.setHours(getHours(originalDate));
-        newDate.setMinutes(getMinutes(originalDate));
-        setDate(newDate);
-    }
   }
 
+  // Render nothing on the server, or a placeholder, to avoid mismatch
+  if (!open) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
