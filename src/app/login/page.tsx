@@ -49,8 +49,8 @@ export default function LoginPage() {
               Enter your credentials to access your task dashboard.
             </CardDescription>
           </div>
-          <Link href="/" passHref legacyBehavior>
-            <Button variant="ghost" size="icon" className="absolute top-4 right-4">
+          <Link href="/" className="absolute top-4 right-4">
+            <Button variant="ghost" size="icon" >
               <Home className="h-5 w-5" />
               <span className="sr-only">Go to Home</span>
             </Button>
