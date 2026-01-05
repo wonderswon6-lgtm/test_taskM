@@ -25,6 +25,7 @@ import { useAuth } from '@/context/AuthContext';
 
 
 export default function ListDetailPage({ params }: { params: { listId: string } }) {
+  const { listId } = params;
   const { lists, ...taskHandlers } = useContext(TasksContext);
   const [newTaskText, setNewTaskText] = useState('');
   const auth = useAuth();
@@ -39,7 +40,7 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
     }
   }, [user, loading, router]);
 
-  const list = useMemo(() => lists.find((l) => l.id === params.listId), [lists, params.listId]);
+  const list = useMemo(() => lists.find((l) => l.id === listId), [lists, listId]);
 
   if (loading || !user) {
     return (
@@ -58,7 +59,7 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
   const handleAddNewTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTaskText.trim()) {
-      taskHandlers.addTask(params.listId, newTaskText.trim());
+      taskHandlers.addTask(listId, newTaskText.trim());
       setNewTaskText('');
     }
   };
@@ -138,7 +139,7 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
                       key={task.id}
                       task={task}
                       level={0}
-                      listId={params.listId}
+                      listId={listId}
                     />
                   ))
                 ) : (
@@ -160,7 +161,7 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
                   currentTasks={tasks}
                   onAddTasks={(newTasks) => {
                     newTasks.forEach((taskText) =>
-                      taskHandlers.addTask(params.listId, taskText)
+                      taskHandlers.addTask(listId, taskText)
                     );
                   }}
                 />
