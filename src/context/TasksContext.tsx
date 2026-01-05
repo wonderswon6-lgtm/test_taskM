@@ -100,6 +100,7 @@ const initialTaskLists: TaskList[] = [
 interface TasksContextType {
   lists: TaskList[];
   addList: (name: string, icon: string) => void;
+  deleteList: (listId: string) => void;
   addTask: (listId: string, text: string) => void;
   addSubtask: (listId: string, parentId: string, text: string) => void;
   toggleComplete: (listId: string, taskId: string) => void;
@@ -111,6 +112,7 @@ interface TasksContextType {
 export const TasksContext = createContext<TasksContextType>({
   lists: [],
   addList: () => {},
+  deleteList: () => {},
   addTask: () => {},
   addSubtask: () => {},
   toggleComplete: () => {},
@@ -131,6 +133,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       ...getImageData(name.toLowerCase())
     };
     setLists((prevLists) => [...prevLists, newList]);
+  }, []);
+
+  const deleteList = useCallback((listId: string) => {
+    setLists((prevLists) => prevLists.filter((list) => list.id !== listId));
   }, []);
 
   const modifyTaskRecursive = (
@@ -238,6 +244,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     lists,
     addList,
+    deleteList,
     addTask,
     addSubtask,
     toggleComplete,

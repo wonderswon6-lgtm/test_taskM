@@ -6,6 +6,7 @@ import {
   Menu,
   Plus,
   LogOut,
+  Trash2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -17,6 +18,17 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function SvgIcon({ svg, className }: { svg: string, className?: string }) {
     return <div className={className} dangerouslySetInnerHTML={{ __html: svg }} />;
@@ -55,17 +67,53 @@ const gridVariants = {
 };
 
 function TaskListCard({ list }: { list: TaskList }) {
+  const { deleteList } = useContext(TasksContext);
   const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    deleteList(list.id);
+  };
 
   return (
     <motion.div variants={cardVariants} className="h-full">
       <Link href={`/dashboard/list/${list.id}`} className="group block h-full">
         <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-lg flex flex-col h-full">
           {incompleteTasks > 0 && (
-            <Badge variant="destructive" className="absolute top-2 right-2">
+            <Badge variant="destructive" className="absolute top-2 right-2 z-10">
               {incompleteTasks}
             </Badge>
           )}
+
+          {list.id !== '1' && ( // Assuming '1' is the "All" list which shouldn't be deleted
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-1 right-1 z-20 h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your
+                    "{list.name}" list and all of its tasks.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
           <div className={cn(
               "flex h-32 w-full items-center justify-center bg-secondary/30",
             )}>
