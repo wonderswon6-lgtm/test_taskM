@@ -38,22 +38,26 @@ const iconMap: { [key: string]: React.ElementType } = {
   ShoppingCart,
 };
 
-function countIncompleteTasks(tasks: Task[]): number {
-  let count = 0;
+function countTasks(tasks: Task[]): { total: number, incomplete: number, completed: number } {
+  let total = 0;
+  let completed = 0;
   tasks.forEach(task => {
-    if (!task.completed) {
-      count++;
+    total++;
+    if (task.completed) {
+      completed++;
     }
     if (task.subtasks) {
-      count += countIncompleteTasks(task.subtasks);
+      const subtaskCounts = countTasks(task.subtasks);
+      total += subtaskCounts.total;
+      completed += subtaskCounts.completed;
     }
   });
-  return count;
+  return { total, incomplete: total - completed, completed };
 }
 
 
 function TaskListCard({ list }: { list: TaskList }) {
-  const incompleteTasks = useMemo(() => countIncompleteTasks(list.tasks), [list.tasks]);
+  const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
   const Icon = iconMap[list.icon] || List;
 
   return (
@@ -121,9 +125,10 @@ export default function DashboardPage() {
     return name.substring(0, 2);
   }
 
-  const allTasks = lists.flatMap(list => list.tasks);
-  const totalTasks = allTasks.length;
-  const completedTasks = allTasks.filter(task => task.completed).length;
+  const { total: totalTasks, completed: completedTasks } = useMemo(() => {
+    const allTasks = lists.flatMap(list => list.tasks);
+    return countTasks(allTasks);
+  }, [lists]);
 
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300">
