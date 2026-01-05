@@ -80,10 +80,7 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
   const { deleteList } = useTasks();
   const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
 
-  const handleDelete = (e: React.MouseEvent) => {
-    // Prevent navigation when the delete action is confirmed.
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDelete = () => {
     deleteList(list.id);
   };
 
