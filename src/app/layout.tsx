@@ -27,7 +27,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <ThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+        >
           <FirebaseClientProvider>
             <AuthProvider>
               <TasksProvider>
