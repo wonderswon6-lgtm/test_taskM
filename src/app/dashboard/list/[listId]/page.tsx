@@ -33,14 +33,14 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
 
   const user = auth?.user;
   const loading = auth?.loading;
+  
+  const list = useMemo(() => lists.find((l) => l.id === listId), [lists, listId]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
-
-  const list = useMemo(() => lists.find((l) => l.id === listId), [lists, listId]);
 
   if (loading || !user) {
     return (
