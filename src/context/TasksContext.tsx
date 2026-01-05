@@ -7,7 +7,8 @@ import {
   useContext,
   useMemo,
   useEffect,
-  useState
+  useState,
+  useRef,
 } from 'react';
 import type { TaskList as TaskListType, Task, SubTask } from '@/lib/types';
 import { useFirebase, useUser, useCollection, useMemoFirebase } from '@/firebase';
@@ -24,6 +25,7 @@ import {
     deleteDocumentNonBlocking,
 } from '@/firebase/non-blocking-updates';
 import { v4 as uuidv4 } from 'uuid';
+import { generateListIcon } from '@/ai/flows/generate-list-icon';
 
 // This is a temporary type shim while we migrate fully to firestore.
 // It allows us to merge firestore data with local data.
@@ -74,10 +76,19 @@ const allTasksList: CombinedTaskList = {
   imageHint: 'organized tasks',
 };
 
+const defaultCategories = ['Work', 'Home', 'Shopping'];
+const defaultIcons: { [key: string]: string } = {
+  Work: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="12" x="5" y="6" rx="2"/><path d="M2 12h2.5"/><path d="M19.5 12H22"/><path d="M12 2v2.5"/><path d="M12 18v2.5"/></svg>',
+  Home: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  Shopping: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.16"/></svg>',
+};
+
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
-  const [welcomeTasksCreated, setWelcomeTasksCreated] = useState(false);
+  
+  // Use a ref to ensure the default list creation only runs once per user session
+  const defaultListsCreated = useRef(false);
 
   // Memoize the Firestore query for lists.
   const listsQuery = useMemoFirebase(
@@ -99,32 +110,45 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   );
   const { data: tasksData, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
   
-  // Create some welcome tasks for new users
+  // Create default categories for new users
   useEffect(() => {
-    if (user && !isLoadingLists && !isLoadingTasks && !welcomeTasksCreated && listsData?.length === 0 && tasksData?.length === 0) {
-      const welcomeListId = uuidv4();
-      const welcomeList: Omit<TaskListType, 'id'> = {
-        name: 'Welcome!',
-        userId: user.uid,
-        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12M6 12l5-5M6 12l5 5"/></svg>'
+    // Conditions to run: user is loaded, not loading lists/tasks, it's the first time, and there's no data yet.
+    if (user && !isLoadingLists && !isLoadingTasks && !defaultListsCreated.current && listsData?.length === 0 && tasksData?.length === 0) {
+      defaultListsCreated.current = true; // Mark as run
+
+      const createDefaultList = async (listName: string) => {
+        try {
+          const iconResult = await generateListIcon({ listName });
+          const svgMatch = iconResult.svg.match(/<svg.*<\/svg>/s);
+          const iconSvg = svgMatch ? svgMatch[0] : defaultIcons[listName] || allTasksList.icon;
+          
+          const newListId = uuidv4();
+          const listDoc: TaskListType = {
+            id: newListId,
+            name: listName,
+            icon: iconSvg,
+            userId: user.uid,
+          };
+          const docRef = doc(firestore!, 'users', user.uid, 'lists', newListId);
+          setDocumentNonBlocking(docRef, listDoc, { merge: true });
+        } catch (error) {
+          console.error(`Failed to create default list "${listName}":`, error);
+          // Fallback for AI icon generation failure
+          const newListId = uuidv4();
+          const listDoc: TaskListType = {
+            id: newListId,
+            name: listName,
+            icon: defaultIcons[listName] || allTasksList.icon,
+            userId: user.uid,
+          };
+          const docRef = doc(firestore!, 'users', user.uid, 'lists', newListId);
+          setDocumentNonBlocking(docRef, listDoc, { merge: true });
+        }
       };
 
-      const welcomeTasks: Omit<Task, 'id' | 'listId' | 'userId'>[] = [
-        { text: 'This is a sample task', completed: false, subtasks: [] },
-        { text: 'You can add more tasks', completed: false, subtasks: [] },
-        { text: 'And create new lists!', completed: false, subtasks: [] }
-      ];
-
-      addDocumentNonBlocking(collection(firestore!, 'users', user.uid, 'lists'), { ...welcomeList, id: welcomeListId });
-
-      welcomeTasks.forEach(task => {
-        const taskId = uuidv4();
-        addDocumentNonBlocking(collection(firestore!, 'users', user.uid, 'tasks'), { ...task, id: taskId, listId: welcomeListId, userId: user.uid });
-      });
-
-      setWelcomeTasksCreated(true);
+      defaultCategories.forEach(createDefaultList);
     }
-  }, [user, isLoadingLists, isLoadingTasks, listsData, tasksData, firestore, welcomeTasksCreated]);
+  }, [user, isLoadingLists, isLoadingTasks, listsData, tasksData, firestore]);
 
   const addList = useCallback(
     (name: string, icon: string) => {
