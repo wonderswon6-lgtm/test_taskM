@@ -104,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 id: result.user.uid,
                 email: result.user.email,
                 displayName: result.user.displayName,
+                avatarUrl: result.user.photoURL,
               },
               { merge: true }
             );
@@ -140,15 +141,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Create a user profile in Firestore
     const userRef = doc(firestore, 'users', user.uid);
+    const displayName = user.email?.split('@')[0] || 'New User';
     await setDoc(userRef, {
       id: user.uid,
       email: user.email,
-      displayName: user.email?.split('@')[0] || 'New User', // Default display name
+      displayName: displayName,
     });
 
     // Also update the auth profile
     await updateProfile(user, {
-        displayName: user.email?.split('@')[0] || 'New User',
+        displayName: displayName,
     });
   };
 
