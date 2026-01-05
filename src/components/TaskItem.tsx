@@ -43,6 +43,30 @@ export function TaskItem({
   const inputRef = useRef<HTMLInputElement>(null);
   const subtaskInputRef = useRef<HTMLInputElement>(null);
 
+  const [displayDate, setDisplayDate] = useState({ text: '', className: '' });
+
+  useEffect(() => {
+    if (task.dueDate) {
+      const date = new Date(task.dueDate);
+      let text = format(date, 'MMM d');
+      let className = 'text-muted-foreground';
+
+      if (isToday(date)) {
+        text = 'Today';
+        className = 'text-blue-500 font-semibold';
+      } else if (isTomorrow(date)) {
+        text = 'Tomorrow';
+      } else if (isPast(date)) {
+        text = `Overdue`;
+        className = 'text-destructive font-semibold';
+      }
+      
+      setDisplayDate({ text, className });
+    } else {
+      setDisplayDate({ text: '', className: '' });
+    }
+  }, [task.dueDate]);
+
   useEffect(() => {
     if (isEditing) {
       inputRef.current?.focus();
@@ -83,23 +107,6 @@ export function TaskItem({
       setDatePickerOpen(false);
     }
   };
-
-  const formattedDueDate = () => {
-    if (!task.dueDate) return null;
-    const date = new Date(task.dueDate);
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
-    if (isPast(date) && !isToday(date)) return `Overdue`;
-    return format(date, 'MMM d');
-  };
-
-  const dueDateColor = () => {
-    if (!task.dueDate) return 'text-muted-foreground';
-    const date = new Date(task.dueDate);
-    if (isToday(date)) return 'text-blue-500 font-semibold';
-    if (isPast(date)) return 'text-destructive font-semibold';
-    return 'text-muted-foreground';
-  }
 
   return (
     <motion.div
@@ -148,9 +155,9 @@ export function TaskItem({
           </span>
         )}
 
-        {task.dueDate && (
-          <span className={cn("text-xs", dueDateColor())}>
-            {formattedDueDate()}
+        {displayDate.text && (
+          <span className={cn("text-xs", displayDate.className)}>
+            {displayDate.text}
           </span>
         )}
 
