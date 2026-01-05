@@ -53,6 +53,12 @@
       "description": "A background for the login and signup pages.",
       "imageUrl": "https://images.unsplash.com/photo-1559526324-c1f275fbfa32?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzOTY3MDZ8MHwxfHNlYXJjaHw1fHxwbGFubmluZ3xlbnwwfHx8fDE3MTg3NDYyNDJ8MA&ixlib=rb-4.0.3&q=80&w=1080",
       "imageHint": "tasks checklist"
+    },
+    {
+      "id": "app-showcase",
+      "description": "A showcase of the application interface.",
+      "imageUrl": "https://images.unsplash.com/photo-1632505084039-f8ec4b00e432?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhcHAlMjBzY3JlZW5zaG90fGVufDB8fHx8MTc2NzU3NzUyM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "app screenshot"
     }
   ]
 }
