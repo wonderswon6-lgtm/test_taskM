@@ -3,16 +3,8 @@
 import { useContext, useMemo, useEffect } from 'react';
 import type { TaskList, Task } from '@/lib/types';
 import {
-  Briefcase,
-  Home,
-  List,
   Menu,
-  Music,
-  Palette,
-  Plane,
   Plus,
-  BookOpen,
-  ShoppingCart,
   LogOut,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -26,16 +18,9 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
-const iconMap: { [key: string]: React.ElementType } = {
-  List,
-  Briefcase,
-  Music,
-  Plane,
-  BookOpen,
-  Home,
-  Palette,
-  ShoppingCart,
-};
+function SvgIcon({ svg, className }: { svg: string, className?: string }) {
+    return <div className={className} dangerouslySetInnerHTML={{ __html: svg }} />;
+}
 
 function countTasks(tasks: Task[]): { total: number, incomplete: number, completed: number } {
   let total = 0;
@@ -71,7 +56,6 @@ const gridVariants = {
 
 function TaskListCard({ list }: { list: TaskList }) {
   const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
-  const Icon = iconMap[list.icon] || List;
 
   return (
     <motion.div variants={cardVariants} className="h-full">
@@ -85,7 +69,7 @@ function TaskListCard({ list }: { list: TaskList }) {
           <div className={cn(
               "flex h-32 w-full items-center justify-center bg-secondary/30",
             )}>
-              <Icon className="h-12 w-12 text-primary opacity-80" />
+              <SvgIcon svg={list.icon} className="h-12 w-12 text-primary opacity-80" />
           </div>
           <div className="p-4 flex-grow flex flex-col justify-between">
               <div>

@@ -32,16 +32,10 @@ import {
 } from '@/ai/flows/suggest-related-tasks';
 import { useToast } from '@/hooks/use-toast';
 
-const iconMap: { [key: string]: React.ElementType } = {
-  List,
-  Briefcase,
-  Music,
-  Plane,
-  BookOpen,
-  Home,
-  Palette,
-  ShoppingCart,
-};
+function SvgIcon({ svg, className }: { svg: string, className?: string }) {
+    return <div className={className} dangerouslySetInnerHTML={{ __html: svg }} />;
+}
+
 
 function countTasks(
   tasks: Task[]
@@ -132,8 +126,6 @@ export default function ListDetailPage() {
     );
   }
 
-  const Icon = iconMap[list.icon] || List;
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <div className="container mx-auto max-w-4xl p-4 py-8 md:p-8">
@@ -152,7 +144,7 @@ export default function ListDetailPage() {
                 'flex h-16 w-16 items-center justify-center rounded-lg bg-secondary/50'
               )}
             >
-              <Icon className="h-8 w-8 text-primary" />
+              <SvgIcon svg={list.icon} className="h-8 w-8 text-primary" />
             </div>
             <div>
               <h1 className="text-4xl font-bold tracking-tight">{list.name}</h1>

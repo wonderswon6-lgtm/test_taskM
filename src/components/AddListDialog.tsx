@@ -9,56 +9,54 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TasksContext } from '@/context/TasksContext';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
-  Briefcase,
-  Home,
-  List,
-  Music,
-  Palette,
-  Plane,
-  BookOpen,
-  ShoppingCart,
-} from 'lucide-react';
-
-const icons = {
-  List,
-  Briefcase,
-  Music,
-  Plane,
-  BookOpen,
-  Home,
-  Palette,
-  ShoppingCart,
-};
-const iconNames = Object.keys(icons);
+  generateListIcon,
+  type GenerateListIconInput,
+} from '@/ai/flows/generate-list-icon';
 
 export function AddListDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [listName, setListName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState(iconNames[0]);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { addList } = useContext(TasksContext);
+  const { toast } = useToast();
 
-  const handleAddList = () => {
+  const handleAddList = async () => {
     if (listName.trim()) {
-      addList(listName.trim(), selectedIcon);
-      setListName('');
-      setSelectedIcon(iconNames[0]);
-      setOpen(false);
+      setIsGenerating(true);
+      try {
+        const iconInput: GenerateListIconInput = { listName: listName.trim() };
+        const result = await generateListIcon(iconInput);
+        
+        // The API returns an SVG string, often wrapped in markdown.
+        // We need to extract the raw SVG.
+        const svgMatch = result.svg.match(/<svg.*<\/svg>/s);
+        const svgString = svgMatch ? svgMatch[0] : '<svg />';
+
+        addList(listName.trim(), svgString);
+        setListName('');
+        setOpen(false);
+      } catch (error) {
+        console.error('Failed to generate icon:', error);
+        toast({
+          title: 'Icon Generation Failed',
+          description: 'Could not generate an icon. Using a default.',
+          variant: 'destructive',
+        });
+        // Fallback to a default icon
+        addList(listName.trim(), '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>');
+        setOpen(false);
+      } finally {
+        setIsGenerating(false);
+      }
     }
   };
-
-  const IconComponent = icons[selectedIcon as keyof typeof icons];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -67,7 +65,7 @@ export function AddListDialog({ children }: { children: React.ReactNode }) {
         <DialogHeader>
           <DialogTitle>Create New List</DialogTitle>
           <DialogDescription>
-            Give your new list a name and choose an icon.
+            Give your new list a name. An AI-generated icon will be created for it.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -80,40 +78,16 @@ export function AddListDialog({ children }: { children: React.ReactNode }) {
               value={listName}
               onChange={(e) => setListName(e.target.value)}
               className="col-span-3"
-              placeholder="e.g. Groceries"
+              placeholder="e.g. Groceries, Vacation Prep..."
+              disabled={isGenerating}
             />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="icon-select" className="text-right">
-              Icon
-            </Label>
-            <Select value={selectedIcon} onValueChange={setSelectedIcon}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue>
-                  <div className="flex items-center gap-2">
-                    <IconComponent className="h-5 w-5" />
-                    <span>{selectedIcon}</span>
-                  </div>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {iconNames.map((iconName) => {
-                  const Icon = icons[iconName as keyof typeof icons];
-                  return (
-                    <SelectItem key={iconName} value={iconName}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-5 w-5" />
-                        <span>{iconName}</span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleAddList}>Create List</Button>
+          <Button onClick={handleAddList} disabled={isGenerating || !listName.trim()}>
+            {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isGenerating ? 'Creating...' : 'Create List'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
