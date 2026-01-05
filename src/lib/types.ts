@@ -3,6 +3,7 @@ export type Task = {
   text: string;
   completed: boolean;
   subtasks: Task[];
+  dueDate?: string;
 };
 
 export type TaskList = {

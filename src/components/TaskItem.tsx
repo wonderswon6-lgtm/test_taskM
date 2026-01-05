@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useContext } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { MoreVertical, Trash2, Edit, CornerDownRight } from 'lucide-react';
+import { MoreVertical, Trash2, Edit, CornerDownRight, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -13,8 +13,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TasksContext } from '@/context/TasksContext';
+import { format } from 'date-fns';
 
 type TaskItemProps = {
   task: Task;
@@ -27,11 +34,12 @@ export function TaskItem({
   level,
   listId,
 }: TaskItemProps) {
-  const { toggleComplete, updateTaskText, deleteTask, addSubtask } = useContext(TasksContext);
+  const { toggleComplete, updateTaskText, deleteTask, addSubtask, setTaskDueDate } = useContext(TasksContext);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
   const [newSubtaskText, setNewSubtaskText] = useState('');
+  const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const subtaskInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +74,13 @@ export function TaskItem({
       addSubtask(listId, task.id, newSubtaskText.trim());
       setNewSubtaskText('');
       setShowSubtaskInput(false);
+    }
+  };
+  
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setTaskDueDate(listId, task.id, date.toISOString());
+      setDatePickerOpen(false);
     }
   };
 
@@ -116,7 +131,29 @@ export function TaskItem({
           </span>
         )}
 
+        {task.dueDate && (
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(task.dueDate), 'MMM d')}
+          </span>
+        )}
+
         <div className="ml-auto flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <Popover open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <CalendarIcon className="h-4 w-4" />
+                <span className="sr-only">Set due date</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={task.dueDate ? new Date(task.dueDate) : undefined}
+                onSelect={handleDateSelect}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
   CardDescription,
@@ -17,7 +16,6 @@ import { Progress } from '@/components/ui/progress';
 import { Plus, CheckCircle, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TaskItem } from '@/components/TaskItem';
-import { AIAssistant } from '@/components/AIAssistant';
 import Link from 'next/link';
 import { TasksContext } from '@/context/TasksContext';
 import { notFound, useRouter } from 'next/navigation';
@@ -42,16 +40,23 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
     }
   }, [user, loading, router]);
 
+  if (!list) {
+    if (!loading) {
+      return notFound();
+    }
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <p>Loading...</p>
+        </div>
+    );
+  }
+
   if (loading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
       </div>
     );
-  }
-
-  if (!list) {
-    return notFound();
   }
 
   const tasks = list.tasks;
@@ -155,18 +160,6 @@ export default function ListDetailPage({ params }: { params: { listId: string } 
                 )}
               </div>
             </CardContent>
-            {tasks.length > 0 && (
-              <CardFooter>
-                <AIAssistant
-                  currentTasks={tasks}
-                  onAddTasks={(newTasks) => {
-                    newTasks.forEach((taskText) =>
-                      taskHandlers.addTask(listId, taskText)
-                    );
-                  }}
-                />
-              </CardFooter>
-            )}
           </Card>
         </div>
       </main>

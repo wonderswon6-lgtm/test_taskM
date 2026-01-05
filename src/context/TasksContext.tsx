@@ -5,7 +5,8 @@ import type { TaskList, Task } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const getImageData = (seed: string) => {
-    const imageData = PlaceHolderImages.find((img) => img.id.includes(seed));
+    const seedId = `list-${seed.toLowerCase()}`;
+    const imageData = PlaceHolderImages.find((img) => img.id === seedId);
     return {
         imageUrl: imageData?.imageUrl || `https://picsum.photos/seed/${seed}/400/300`,
         imageHint: imageData?.imageHint || 'random image',
@@ -104,6 +105,7 @@ interface TasksContextType {
   toggleComplete: (listId: string, taskId: string) => void;
   updateTaskText: (listId: string, taskId: string, newText: string) => void;
   deleteTask: (listId: string, taskId: string) => void;
+  setTaskDueDate: (listId: string, taskId: string, dueDate: string) => void;
 }
 
 export const TasksContext = createContext<TasksContextType>({
@@ -114,6 +116,7 @@ export const TasksContext = createContext<TasksContextType>({
   toggleComplete: () => {},
   updateTaskText: () => {},
   deleteTask: () => {},
+  setTaskDueDate: () => {},
 });
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
@@ -221,6 +224,17 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [lists]);
 
+  const setTaskDueDate = useCallback((listId: string, taskId: string, dueDate: string) => {
+    const list = lists.find(l => l.id === listId);
+    if (list) {
+        const newTasks = modifyTaskRecursive(list.tasks, taskId, (task) => ({
+            ...task,
+            dueDate,
+        }));
+        updateListTasks(listId, newTasks);
+    }
+  }, [lists]);
+
   const value = {
     lists,
     addList,
@@ -229,6 +243,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     toggleComplete,
     updateTaskText,
     deleteTask,
+    setTaskDueDate,
   };
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

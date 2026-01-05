@@ -24,6 +24,7 @@ import { useAuth, type User } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 const iconMap: { [key: string]: React.ElementType } = {
   List,
@@ -59,8 +60,13 @@ function TaskListCard({ list }: { list: TaskList }) {
   const Icon = iconMap[list.icon] || List;
 
   return (
-    <Link href={`/dashboard/list/${list.id}`} className="group block">
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm transition-all group-hover:shadow-md group-hover:-translate-y-1 flex flex-col h-full">
+    <Link href={`/dashboard/list/${list.id}`} className="group block h-full">
+      <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all group-hover:shadow-md group-hover:-translate-y-1 flex flex-col h-full">
+        {incompleteTasks > 0 && (
+          <Badge variant="destructive" className="absolute top-2 right-2">
+            {incompleteTasks}
+          </Badge>
+        )}
         <div className={cn(
             "flex h-32 w-full items-center justify-center bg-secondary/30",
             "group-hover:bg-secondary/50 transition-colors"
