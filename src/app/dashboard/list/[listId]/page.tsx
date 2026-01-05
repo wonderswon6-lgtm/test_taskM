@@ -77,7 +77,7 @@ export default function ListDetailPage() {
     if (!list) return;
     setIsSuggesting(true);
     try {
-      const currentTaskNames = list.tasks.map((t) => t.text);
+      const currentTaskNames = list.tasks.map((t: Task) => t.text);
       const input: SuggestRelatedTasksInput = { taskList: currentTaskNames };
       const result = await suggestRelatedTasks(input);
 
