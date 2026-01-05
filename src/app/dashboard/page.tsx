@@ -60,8 +60,8 @@ function TaskListCard({ list }: { list: TaskList }) {
   const Icon = iconMap[list.icon] || List;
 
   return (
-    <Link href={`/dashboard/list/${list.id}`} className="group block h-full">
-      <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all group-hover:shadow-md group-hover:-translate-y-1 flex flex-col h-full">
+    <div className="group block h-full">
+      <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all flex flex-col h-full">
         {incompleteTasks > 0 && (
           <Badge variant="destructive" className="absolute top-2 right-2">
             {incompleteTasks}
@@ -69,9 +69,8 @@ function TaskListCard({ list }: { list: TaskList }) {
         )}
         <div className={cn(
             "flex h-32 w-full items-center justify-center bg-secondary/30",
-            "group-hover:bg-secondary/50 transition-colors"
           )}>
-            <Icon className="h-12 w-12 text-primary opacity-80 transition-transform group-hover:scale-110" />
+            <Icon className="h-12 w-12 text-primary opacity-80" />
         </div>
         <div className="p-4 flex-grow flex flex-col justify-between">
             <div>
@@ -80,7 +79,7 @@ function TaskListCard({ list }: { list: TaskList }) {
             </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
