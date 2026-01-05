@@ -17,6 +17,8 @@ import {
   signOut,
   getRedirectResult,
   updateProfile,
+  setPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useFirebase, useUser } from '@/firebase';
@@ -66,6 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const auth = firebaseContext?.auth;
   const firestore = firebaseContext?.firestore;
+
+  useEffect(() => {
+    if (auth) {
+      setPersistence(auth, browserLocalPersistence);
+    }
+  }, [auth]);
 
   useEffect(() => {
     setLoading(isUserLoading);
