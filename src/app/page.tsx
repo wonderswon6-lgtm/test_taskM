@@ -1,21 +1,19 @@
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { InteractiveCanvas } from '@/components/InteractiveCanvas';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function LandingPage() {
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-background text-foreground">
-      <InteractiveCanvas />
-      <header className="container relative z-10 mx-auto flex items-center justify-between p-4">
+    <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
+      <header className="container mx-auto flex items-center justify-between p-4">
         <h1 className="font-headline text-2xl font-bold text-primary">
           TaskFlow
         </h1>
         <ThemeToggle />
       </header>
 
-      <main className="relative z-10 flex flex-grow items-center">
+      <main className="flex flex-grow items-center">
         <section className="w-full py-20 text-center md:py-32">
           <div className="container">
             <h2 className="font-headline text-4xl font-bold tracking-tight md:text-6xl">
@@ -37,7 +35,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="relative z-10 container mx-auto p-4 text-center text-muted-foreground">
+      <footer className="container mx-auto p-4 text-center text-muted-foreground">
         <p>&copy; {new Date().getFullYear()} TaskFlow. All rights reserved.</p>
       </footer>
     </div>
