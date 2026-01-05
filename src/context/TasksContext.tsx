@@ -25,7 +25,7 @@ import {
     deleteDocumentNonBlocking,
 } from '@/firebase/non-blocking-updates';
 import { v4 as uuidv4 } from 'uuid';
-import { generateListIcon } from '@/ai/flows/generate-list-icon';
+import { generateListIcon, type GenerateListIconInput } from '@/ai/flows/generate-list-icon';
 
 // This is a temporary type shim while we migrate fully to firestore.
 // It allows us to merge firestore data with local data.
@@ -41,6 +41,7 @@ interface TasksContextType {
   isLoading: boolean;
   addList: (name: string, icon: string) => void;
   deleteList: (listId: string) => void;
+  renameList: (listId: string, newName: string) => Promise<void>;
   addTask: (listId: string, text: string) => void;
   addSubtask: (listId: string, parentId: string, text: string) => void;
   toggleComplete: (listId: string, taskId: string) => void;
@@ -55,6 +56,7 @@ export const TasksContext = createContext<TasksContextType>({
   isLoading: true,
   addList: () => {},
   deleteList: () => {},
+  renameList: async () => {},
   addTask: () => {},
   addSubtask: () => {},
   toggleComplete: () => {},
@@ -187,6 +189,18 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     [firestore, user, tasksData]
   );
 
+  const renameList = useCallback(async (listId: string, newName: string) => {
+    if (!firestore || !user || !newName.trim()) return;
+
+    const iconInput: GenerateListIconInput = { listName: newName.trim() };
+    const result = await generateListIcon(iconInput);
+    const svgMatch = result.svg.match(/<svg.*<\/svg>/s);
+    const newIcon = svgMatch ? svgMatch[0] : '<svg />'; // Fallback icon
+
+    const docRef = doc(firestore, 'users', user.uid, 'lists', listId);
+    updateDocumentNonBlocking(docRef, { name: newName.trim(), icon: newIcon });
+  }, [firestore, user]);
+
   const addTask = useCallback(
     (listId: string, text: string) => {
       if (!firestore || !user) return;
@@ -302,6 +316,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     isLoading: isUserLoading || isLoadingLists || isLoadingTasks,
     addList,
     deleteList,
+    renameList,
     addTask,
     addSubtask,
     toggleComplete,

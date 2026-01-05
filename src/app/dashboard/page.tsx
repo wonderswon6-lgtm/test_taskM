@@ -6,11 +6,13 @@ import {
   Plus,
   LogOut,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useTasks } from '@/context/TasksContext';
 import { AddListDialog } from '@/components/AddListDialog';
+import { EditListDialog } from '@/components/EditListDialog';
 import { cn } from '@/lib/utils';
 import { useAuth, type User } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -95,31 +97,41 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
           )}
 
           {list.id !== 'all' && ( 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <div className="absolute top-1 right-1 z-20 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <EditListDialog list={list}>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="absolute top-1 right-1 z-20 h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="h-8 w-8 text-muted-foreground"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Pencil className="h-4 w-4" />
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your
-                    "{list.name}" list and all of its tasks.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+              </EditListDialog>
+              <AlertDialog>
+                <AlertDialogTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your
+                      "{list.name}" list and all of its tasks.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           )}
 
           <div className={cn(
