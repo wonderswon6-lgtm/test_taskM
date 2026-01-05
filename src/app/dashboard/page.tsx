@@ -81,6 +81,7 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
   const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
 
   const handleDelete = (e: React.MouseEvent) => {
+    // Prevent navigation when the delete action is confirmed.
     e.preventDefault();
     e.stopPropagation();
     deleteList(list.id);
@@ -103,6 +104,7 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
                   variant="ghost" 
                   size="icon" 
                   className="h-8 w-8 text-muted-foreground"
+                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -126,7 +128,7 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

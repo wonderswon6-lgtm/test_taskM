@@ -35,7 +35,8 @@ export function EditListDialog({ list, children }: EditListDialogProps) {
     }
   }, [open, list.name]);
 
-  const handleRenameList = async () => {
+  const handleRenameList = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event from bubbling up
     if (listName.trim() && listName.trim() !== list.name) {
       setIsGenerating(true);
       try {
@@ -60,9 +61,15 @@ export function EditListDialog({ list, children }: EditListDialogProps) {
     }
   };
 
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpen(true);
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+      <DialogTrigger asChild onClick={handleTriggerClick}>
         {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]" onClick={(e) => e.stopPropagation()}>
@@ -88,7 +95,7 @@ export function EditListDialog({ list, children }: EditListDialogProps) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>Cancel</Button>
           <Button onClick={handleRenameList} disabled={isGenerating || !listName.trim()}>
             {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isGenerating ? 'Renaming...' : 'Save Changes'}
