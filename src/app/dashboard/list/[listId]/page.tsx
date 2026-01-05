@@ -18,11 +18,12 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { TaskItem } from '@/components/TaskItem';
 import Link from 'next/link';
 import { TasksContext } from '@/context/TasksContext';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
-export default function ListDetailPage({ params }: { params: { listId: string } }) {
-  const { listId } = params;
+export default function ListDetailPage() {
+  const params = useParams();
+  const listId = params.listId as string;
   const { lists, ...taskHandlers } = useContext(TasksContext);
   const [newTaskText, setNewTaskText] = useState('');
   const auth = useAuth();
