@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowRight, CheckCircle2, BrainCircuit, BellRing, ListTree } from 'lucide-react';
 import Image from 'next/image';
 
@@ -37,7 +36,6 @@ export default function LandingPage() {
             <Button asChild>
                 <Link href="/signup">Get Started <ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>
-          <ThemeToggle />
         </div>
       </header>
 

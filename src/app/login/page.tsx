@@ -40,7 +40,7 @@ export default function LoginPage() {
   const loading = auth?.loading;
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen w-full items-center justify-center p-4 animated-gradient">
       <Card className="w-full max-w-md">
         <CardHeader className="relative">
           <div>
@@ -49,8 +49,8 @@ export default function LoginPage() {
               Enter your credentials to access your task dashboard.
             </CardDescription>
           </div>
-          <Link href="/" className="absolute top-4 right-4">
-            <Button variant="ghost" size="icon" asChild>
+          <Link href="/" passHref legacyBehavior>
+            <Button variant="ghost" size="icon" className="absolute top-4 right-4" asChild>
               <div>
                 <Home className="h-5 w-5" />
                 <span className="sr-only">Go to Home</span>

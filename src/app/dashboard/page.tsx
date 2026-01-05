@@ -15,7 +15,7 @@ import {
   ShoppingCart,
   LogOut,
 } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { TasksContext } from '@/context/TasksContext';
 import { AddListDialog } from '@/components/AddListDialog';
@@ -54,32 +54,48 @@ function countTasks(tasks: Task[]): { total: number, incomplete: number, complet
   return { total, incomplete: total - completed, completed };
 }
 
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const gridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
 
 function TaskListCard({ list }: { list: TaskList }) {
   const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
   const Icon = iconMap[list.icon] || List;
 
   return (
-    <Link href={`/dashboard/list/${list.id}`} className="group block h-full">
-      <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-lg flex flex-col h-full">
-        {incompleteTasks > 0 && (
-          <Badge variant="destructive" className="absolute top-2 right-2">
-            {incompleteTasks}
-          </Badge>
-        )}
-        <div className={cn(
-            "flex h-32 w-full items-center justify-center bg-secondary/30",
-          )}>
-            <Icon className="h-12 w-12 text-primary opacity-80" />
+    <motion.div variants={cardVariants} className="h-full">
+      <Link href={`/dashboard/list/${list.id}`} className="group block h-full">
+        <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-lg flex flex-col h-full">
+          {incompleteTasks > 0 && (
+            <Badge variant="destructive" className="absolute top-2 right-2">
+              {incompleteTasks}
+            </Badge>
+          )}
+          <div className={cn(
+              "flex h-32 w-full items-center justify-center bg-secondary/30",
+            )}>
+              <Icon className="h-12 w-12 text-primary opacity-80" />
+          </div>
+          <div className="p-4 flex-grow flex flex-col justify-between">
+              <div>
+                <h3 className="text-xl font-bold">{list.name}</h3>
+                <p className="text-sm text-muted-foreground">{incompleteTasks} {incompleteTasks === 1 ? 'Task' : 'Tasks'}</p>
+              </div>
+          </div>
         </div>
-        <div className="p-4 flex-grow flex flex-col justify-between">
-            <div>
-              <h3 className="text-xl font-bold">{list.name}</h3>
-              <p className="text-sm text-muted-foreground">{incompleteTasks} {incompleteTasks === 1 ? 'Task' : 'Tasks'}</p>
-            </div>
-        </div>
-      </div>
-    </Link>
+      </Link>
+    </motion.div>
   );
 }
 
@@ -128,7 +144,6 @@ export default function DashboardPage() {
             <h1 className="text-4xl font-bold tracking-tight">Lists</h1>
           </div>
           <div className="flex items-center gap-4">
-            <ThemeToggle />
             <Avatar>
               <AvatarImage src={user.avatarUrl} />
               <AvatarFallback>{getInitials(user.displayName || user.email)}</AvatarFallback>
@@ -139,11 +154,16 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4"
+          variants={gridVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {lists.map((list) => (
             <TaskListCard key={list.id} list={list} />
           ))}
-        </div>
+        </motion.div>
       </main>
       <AddListDialog>
         <button className="fixed bottom-8 right-8 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 z-30">
