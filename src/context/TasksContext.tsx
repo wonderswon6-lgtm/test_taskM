@@ -1,104 +1,42 @@
 'use client';
 
-import { createContext, useState, useCallback, ReactNode } from 'react';
-import type { TaskList, Task } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import {
+  createContext,
+  useCallback,
+  ReactNode,
+  useContext,
+  useMemo,
+  useEffect,
+  useState
+} from 'react';
+import type { TaskList as TaskListType, Task, SubTask } from '@/lib/types';
+import { useFirebase, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import {
+  collection,
+  doc,
+  query,
+  where,
+} from 'firebase/firestore';
+import {
+    setDocumentNonBlocking,
+    addDocumentNonBlocking,
+    updateDocumentNonBlocking,
+    deleteDocumentNonBlocking,
+} from '@/firebase/non-blocking-updates';
+import { v4 as uuidv4 } from 'uuid';
 
-const getImageData = (seed: string) => {
-    const seedId = `list-${seed.toLowerCase()}`;
-    const imageData = PlaceHolderImages.find((img) => img.id === seedId);
-    return {
-        imageUrl: imageData?.imageUrl || `https://picsum.photos/seed/${seed}/400/300`,
-        imageHint: imageData?.imageHint || 'random image',
-    }
-}
-
-const initialTaskLists: TaskList[] = [
-    {
-      id: '1',
-      name: 'All',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>',
-      tasks: [
-        {
-          id: '1-1',
-          text: 'Design the main dashboard UI',
-          completed: true,
-          subtasks: [
-            { id: '1-1-1', text: 'Create wireframes', completed: true, subtasks: [] },
-            { id: '1-1-2', text: 'Develop mockups in Figma', completed: true, subtasks: [] },
-          ],
-        },
-        {
-          id: '1-2',
-          text: 'Develop the main application features',
-          completed: false,
-          subtasks: [
-            { id: '1-2-1', text: 'Implement task creation', completed: true, subtasks: [] },
-          ],
-        },
-      ],
-      ...getImageData('all')
-    },
-    {
-      id: '2',
-      name: 'Work',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
-      tasks: [
-          {
-              id: '2-1',
-              text: 'Finish Q3 report',
-              completed: false,
-              subtasks: [],
-          }
-      ],
-      ...getImageData('work')
-    },
-    {
-      id: '3',
-      name: 'Music',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
-      tasks: [],
-      ...getImageData('music')
-    },
-    {
-      id: '4',
-      name: 'Travel',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>',
-      tasks: [],
-      ...getImageData('travel')
-    },
-    {
-      id: '5',
-      name: 'Study',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
-      tasks: [],
-      ...getImageData('study')
-    },
-    {
-      id: '6',
-      name: 'Home',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
-      tasks: [],
-      ...getImageData('home')
-    },
-    {
-      id: '7',
-      name: 'Art',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a7 7 0 1 0 10 10"/></svg>',
-      tasks: [],
-      ...getImageData('art')
-    },
-    {
-      id: '8',
-      name: 'Shopping',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.16"/></svg>',
-      tasks: [],
-      ...getImageData('shopping')
-    },
-  ];
+// This is a temporary type shim while we migrate fully to firestore.
+// It allows us to merge firestore data with local data.
+type CombinedTaskList = TaskListType & {
+  tasks: Task[];
+  imageUrl: string;
+  imageHint: string;
+};
 
 interface TasksContextType {
-  lists: TaskList[];
+  lists: CombinedTaskList[];
+  allTasks: Task[];
+  isLoading: boolean;
   addList: (name: string, icon: string) => void;
   deleteList: (listId: string) => void;
   addTask: (listId: string, text: string) => void;
@@ -111,6 +49,8 @@ interface TasksContextType {
 
 export const TasksContext = createContext<TasksContextType>({
   lists: [],
+  allTasks: [],
+  isLoading: true,
   addList: () => {},
   deleteList: () => {},
   addTask: () => {},
@@ -121,128 +61,217 @@ export const TasksContext = createContext<TasksContextType>({
   setTaskDueDate: () => {},
 });
 
+export const useTasks = () => useContext(TasksContext);
+
+// A default, non-deletable list that shows all tasks.
+const allTasksList: CombinedTaskList = {
+  id: 'all',
+  name: 'All Tasks',
+  icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>',
+  userId: '',
+  tasks: [],
+  imageUrl: `https://picsum.photos/seed/all/400/300`,
+  imageHint: 'organized tasks',
+};
+
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
-  const [lists, setLists] = useState<TaskList[]>(initialTaskLists);
+  const { firestore } = useFirebase();
+  const { user, isUserLoading } = useUser();
+  const [welcomeTasksCreated, setWelcomeTasksCreated] = useState(false);
 
-  const addList = useCallback((name: string, icon: string) => {
-    const newList: TaskList = {
-      id: crypto.randomUUID(),
-      name,
-      icon,
-      tasks: [],
-      ...getImageData(name.toLowerCase())
-    };
-    setLists((prevLists) => [...prevLists, newList]);
-  }, []);
+  // Memoize the Firestore query for lists.
+  const listsQuery = useMemoFirebase(
+    () =>
+      user && firestore
+        ? collection(firestore, 'users', user.uid, 'lists')
+        : null,
+    [firestore, user]
+  );
+  const { data: listsData, isLoading: isLoadingLists } = useCollection<TaskListType>(listsQuery);
 
-  const deleteList = useCallback((listId: string) => {
-    setLists((prevLists) => prevLists.filter((list) => list.id !== listId));
-  }, []);
-
-  const modifyTaskRecursive = (
-    taskList: Task[],
-    taskId: string,
-    operation: (task: Task) => Task | null
-  ): Task[] => {
-    return taskList
-      .map((task) => {
-        if (task.id === taskId) {
-          return operation(task);
-        }
-        if (task.subtasks.length > 0) {
-          const newSubtasks = modifyTaskRecursive(
-            task.subtasks,
-            taskId,
-            operation
-          );
-          if (newSubtasks !== task.subtasks) {
-            return { ...task, subtasks: newSubtasks };
-          }
-        }
-        return task;
-      })
-      .filter((task): task is Task => task !== null);
-  };
+  // Memoize the Firestore query for tasks.
+  const tasksQuery = useMemoFirebase(
+    () =>
+      user && firestore
+        ? collection(firestore, 'users', user.uid, 'tasks')
+        : null,
+    [firestore, user]
+  );
+  const { data: tasksData, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
   
-  const updateListTasks = (listId: string, newTasks: Task[]) => {
-    setLists(prevLists => prevLists.map(list => 
-        list.id === listId ? {...list, tasks: newTasks} : list
-    ));
-  }
+  // Create some welcome tasks for new users
+  useEffect(() => {
+    if (user && !isLoadingLists && !isLoadingTasks && !welcomeTasksCreated && listsData?.length === 0 && tasksData?.length === 0) {
+      const welcomeListId = uuidv4();
+      const welcomeList: Omit<TaskListType, 'id'> = {
+        name: 'Welcome!',
+        userId: user.uid,
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12M6 12l5-5M6 12l5 5"/></svg>'
+      };
 
-  const addTask = useCallback((listId: string, text: string) => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      text,
-      completed: false,
-      subtasks: [],
-    };
-    const list = lists.find(l => l.id === listId);
-    if(list) {
-        updateListTasks(listId, [...list.tasks, newTask]);
+      const welcomeTasks: Omit<Task, 'id' | 'listId' | 'userId'>[] = [
+        { text: 'This is a sample task', completed: false, subtasks: [] },
+        { text: 'You can add more tasks', completed: false, subtasks: [] },
+        { text: 'And create new lists!', completed: false, subtasks: [] }
+      ];
+
+      addDocumentNonBlocking(collection(firestore!, 'users', user.uid, 'lists'), { ...welcomeList, id: welcomeListId });
+
+      welcomeTasks.forEach(task => {
+        const taskId = uuidv4();
+        addDocumentNonBlocking(collection(firestore!, 'users', user.uid, 'tasks'), { ...task, id: taskId, listId: welcomeListId, userId: user.uid });
+      });
+
+      setWelcomeTasksCreated(true);
     }
-  }, [lists]);
+  }, [user, isLoadingLists, isLoadingTasks, listsData, tasksData, firestore, welcomeTasksCreated]);
 
-  const addSubtask = useCallback((listId: string, parentId: string, text: string) => {
-    const newSubtask: Task = {
-        id: crypto.randomUUID(),
+  const addList = useCallback(
+    (name: string, icon: string) => {
+      if (!firestore || !user) return;
+      const newListId = uuidv4();
+      const listDoc: TaskListType = {
+        id: newListId,
+        name,
+        icon,
+        userId: user.uid,
+      };
+      const docRef = doc(firestore, 'users', user.uid, 'lists', newListId);
+      setDocumentNonBlocking(docRef, listDoc, { merge: true });
+    },
+    [firestore, user]
+  );
+
+  const deleteList = useCallback(
+    async (listId: string) => {
+      if (!firestore || !user || listId === 'all') return;
+      
+      const docRef = doc(firestore, 'users', user.uid, 'lists', listId);
+      deleteDocumentNonBlocking(docRef);
+
+      // Also delete all tasks associated with this list
+      const tasksInList = (tasksData || []).filter(t => t.listId === listId);
+      for (const task of tasksInList) {
+          const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', task.id);
+          deleteDocumentNonBlocking(taskDocRef);
+      }
+    },
+    [firestore, user, tasksData]
+  );
+
+  const addTask = useCallback(
+    (listId: string, text: string) => {
+      if (!firestore || !user) return;
+      
+      const targetListId = listId === 'all' ? (listsData?.[0]?.id ?? 'default') : listId;
+
+      const newTaskId = uuidv4();
+      const newTask: Task = {
+        id: newTaskId,
         text,
         completed: false,
         subtasks: [],
-    };
-    const list = lists.find(l => l.id === listId);
-    if (list) {
-        const newTasks = modifyTaskRecursive(list.tasks, parentId, (task) => ({
-            ...task,
-            subtasks: [...task.subtasks, newSubtask],
-        }));
-        updateListTasks(listId, newTasks);
-    }
-  }, [lists]);
-
-  const toggleComplete = useCallback((listId: string, taskId: string) => {
-    const list = lists.find(l => l.id === listId);
-    if (list) {
-        const newTasks = modifyTaskRecursive(list.tasks, taskId, (task) => ({
-            ...task,
-            completed: !task.completed,
-        }));
-        updateListTasks(listId, newTasks);
-    }
-  }, [lists]);
-
-  const updateTaskText = useCallback((listId: string, taskId: string, newText: string) => {
-    const list = lists.find(l => l.id === listId);
-    if (list) {
-        const newTasks = modifyTaskRecursive(list.tasks, taskId, (task) => ({
-            ...task,
-            text: newText,
-        }));
-        updateListTasks(listId, newTasks);
-    }
-  }, [lists]);
+        listId: targetListId,
+        userId: user.uid,
+      };
+      const docRef = doc(firestore, 'users', user.uid, 'tasks', newTaskId);
+      setDocumentNonBlocking(docRef, newTask, { merge: true });
+    },
+    [firestore, user, listsData]
+  );
   
-  const deleteTask = useCallback((listId: string, taskId: string) => {
-    const list = lists.find(l => l.id === listId);
-    if (list) {
-        const newTasks = modifyTaskRecursive(list.tasks, taskId, () => null);
-        updateListTasks(listId, newTasks);
-    }
-  }, [lists]);
+  const findTask = (taskId: string) => tasksData?.find(t => t.id === taskId);
 
-  const setTaskDueDate = useCallback((listId: string, taskId: string, dueDate: string) => {
-    const list = lists.find(l => l.id === listId);
-    if (list) {
-        const newTasks = modifyTaskRecursive(list.tasks, taskId, (task) => ({
-            ...task,
-            dueDate,
-        }));
-        updateListTasks(listId, newTasks);
-    }
-  }, [lists]);
+  const updateTask = (taskId: string, updates: Partial<Task>) => {
+      if (!firestore || !user) return;
+      const docRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
+      updateDocumentNonBlocking(docRef, updates);
+  };
+  
+  const addSubtask = useCallback(
+    (listId: string, parentId: string, text: string) => {
+      const parentTask = findTask(parentId);
+      if (!parentTask) return;
 
+      const newSubtask: SubTask = {
+        id: uuidv4(),
+        text,
+        completed: false,
+      };
+
+      const updatedSubtasks = [...(parentTask.subtasks || []), newSubtask];
+      updateTask(parentId, { subtasks: updatedSubtasks });
+    },
+    [tasksData, firestore, user]
+  );
+
+  const toggleComplete = useCallback(
+    (listId: string, taskId: string) => {
+      const task = findTask(taskId);
+      if (task) {
+          updateTask(taskId, { completed: !task.completed });
+      }
+    },
+    [tasksData, firestore, user]
+  );
+
+  const updateTaskText = useCallback(
+    (listId: string, taskId: string, newText: string) => {
+        const task = findTask(taskId);
+        if (task) {
+            updateTask(taskId, { text: newText });
+        }
+    },
+    [tasksData, firestore, user]
+  );
+
+  const deleteTask = useCallback(
+    (listId: string, taskId: string) => {
+      if (!firestore || !user) return;
+      const docRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
+      deleteDocumentNonBlocking(docRef);
+    },
+    [firestore, user]
+  );
+
+  const setTaskDueDate = useCallback(
+    (listId: string, taskId: string, dueDate: string) => {
+        const task = findTask(taskId);
+        if (task) {
+            updateTask(taskId, { dueDate });
+        }
+    },
+    [tasksData, firestore, user]
+  );
+
+  const processedLists = useMemo<CombinedTaskList[]>(() => {
+    const tasksByList: { [key: string]: Task[] } = {};
+
+    (tasksData || []).forEach(task => {
+        if (!tasksByList[task.listId]) {
+            tasksByList[task.listId] = [];
+        }
+        tasksByList[task.listId].push(task);
+    });
+
+    const combined = (listsData || []).map(list => ({
+        ...list,
+        tasks: tasksByList[list.id] || [],
+        // These are placeholders for now, can be replaced with real data if needed
+        imageUrl: `https://picsum.photos/seed/${list.name.toLowerCase()}/400/300`,
+        imageHint: list.name.toLowerCase(),
+    }));
+    
+    // Update the 'All' list with all tasks
+    allTasksList.tasks = tasksData || [];
+
+    return [allTasksList, ...combined];
+  }, [listsData, tasksData]);
+  
   const value = {
-    lists,
+    lists: processedLists,
+    allTasks: tasksData || [],
+    isLoading: isUserLoading || isLoadingLists || isLoadingTasks,
     addList,
     deleteList,
     addTask,
@@ -253,5 +282,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     setTaskDueDate,
   };
 
-  return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
+  return (
+    <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
+  );
 };

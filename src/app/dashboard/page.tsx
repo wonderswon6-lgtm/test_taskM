@@ -1,16 +1,15 @@
 'use client';
 
 import { useContext, useMemo, useEffect } from 'react';
-import type { TaskList, Task } from '@/lib/types';
+import type { Task } from '@/lib/types';
 import {
-  Menu,
   Plus,
   LogOut,
   Trash2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { TasksContext } from '@/context/TasksContext';
+import { useTasks } from '@/context/TasksContext';
 import { AddListDialog } from '@/components/AddListDialog';
 import { cn } from '@/lib/utils';
 import { useAuth, type User } from '@/context/AuthContext';
@@ -29,6 +28,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+
+// This is a temporary type shim while we migrate fully to firestore.
+// It allows us to merge firestore data with local data.
+import type { TaskList as TaskListType } from '@/lib/types';
+type CombinedTaskList = TaskListType & {
+  tasks: Task[];
+  imageUrl: string;
+  imageHint: string;
+};
 
 function SvgIcon({ svg, className }: { svg: string, className?: string }) {
     return <div className={className} dangerouslySetInnerHTML={{ __html: svg }} />;
@@ -66,8 +74,8 @@ const gridVariants = {
   },
 };
 
-function TaskListCard({ list }: { list: TaskList }) {
-  const { deleteList } = useContext(TasksContext);
+function TaskListCard({ list }: { list: CombinedTaskList }) {
+  const { deleteList } = useTasks();
   const { incomplete: incompleteTasks } = useMemo(() => countTasks(list.tasks), [list.tasks]);
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -86,7 +94,7 @@ function TaskListCard({ list }: { list: TaskList }) {
             </Badge>
           )}
 
-          {list.id !== '1' && ( // Assuming '1' is the "All" list which shouldn't be deleted
+          {list.id !== 'all' && ( 
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button 
@@ -132,26 +140,21 @@ function TaskListCard({ list }: { list: TaskList }) {
 }
 
 export default function DashboardPage() {
-  const { lists } = useContext(TasksContext);
+  const { lists, isLoading } = useTasks();
   const auth = useAuth();
   const router = useRouter();
   
   const user = auth?.user;
-  const loading = auth?.loading;
+  const authLoading = auth?.loading;
   const logout = auth?.logout;
 
-  const { total: totalTasks, completed: completedTasks } = useMemo(() => {
-    const allTasks = lists.flatMap(list => list.tasks);
-    return countTasks(allTasks);
-  }, [lists]);
-
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
   
-  if (loading || !user) {
+  if (authLoading || isLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>

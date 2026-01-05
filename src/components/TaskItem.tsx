@@ -1,7 +1,8 @@
 'use client';
 
 import type { Task } from '@/lib/types';
-import { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useTasks } from '@/context/TasksContext';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ReminderDialog } from '@/components/ReminderDialog';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TasksContext } from '@/context/TasksContext';
 import { format, isToday, isPast, isTomorrow } from 'date-fns';
 
 type TaskItemProps = {
@@ -29,7 +29,7 @@ export function TaskItem({
   level,
   listId,
 }: TaskItemProps) {
-  const { toggleComplete, updateTaskText, deleteTask, addSubtask, setTaskDueDate } = useContext(TasksContext);
+  const { toggleComplete, updateTaskText, deleteTask, addSubtask, setTaskDueDate } = useTasks();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
@@ -219,7 +219,7 @@ export function TaskItem({
               {task.subtasks.map((subtask) => (
                 <TaskItem
                   key={subtask.id}
-                  task={subtask}
+                  task={{...subtask, listId: task.listId, userId: task.userId}}
                   level={level + 1}
                   listId={listId}
                 />

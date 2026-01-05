@@ -12,7 +12,11 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Task). The user who created or is assigned to the task."
+          "description": "Reference to User. The user who created the task."
+        },
+        "listId": {
+            "type": "string",
+            "description": "Reference to the List this task belongs to."
         },
         "title": {
           "type": "string",
@@ -26,19 +30,23 @@
           "type": "boolean",
           "description": "Indicates whether the task is complete or not."
         },
-        "subTaskIds": {
+        "subTasks": {
           "type": "array",
-          "description": "References to SubTasks. (Relationship: Task 1:N SubTask).",
+          "description": "An array of SubTasks.",
           "items": {
-            "type": "string"
+            "$ref": "#/entities/SubTask"
           }
+        },
+        "dueDate": {
+            "type": "string",
+            "format": "date-time"
         }
       },
       "required": [
         "id",
         "userId",
+        "listId",
         "title",
-        "description",
         "isComplete"
       ]
     },
@@ -52,11 +60,7 @@
           "type": "string",
           "description": "Unique identifier for the SubTask entity."
         },
-        "taskId": {
-          "type": "string",
-          "description": "Reference to Task. (Relationship: Task 1:N SubTask). The parent task this subtask belongs to."
-        },
-        "description": {
+        "title": {
           "type": "string",
           "description": "Description of the subtask."
         },
@@ -67,8 +71,7 @@
       },
       "required": [
         "id",
-        "taskId",
-        "description",
+        "title",
         "isComplete"
       ]
     },
@@ -97,6 +100,31 @@
         "email",
         "displayName"
       ]
+    },
+    "List": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "List",
+      "type": "object",
+      "description": "Represents a user-created list or category for tasks.",
+      "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique identifier for the List entity."
+        },
+        "userId": {
+            "type": "string",
+            "description": "The ID of the user who owns this list."
+        },
+        "name": {
+            "type": "string",
+            "description": "The name of the list."
+        },
+        "icon": {
+            "type": "string",
+            "description": "The SVG string for the list's icon."
+        }
+      },
+      "required": ["id", "userId", "name", "icon"]
     }
   },
   "auth": {
@@ -124,13 +152,31 @@
         }
       },
       {
+        "path": "/users/{userId}/lists/{listId}",
+        "definition": {
+          "entityName": "List",
+          "schema": { "$ref": "#/backend/entities/List" },
+          "description": "Stores the user's task lists (categories).",
+          "params": [
+             {
+              "name": "userId",
+              "description": "The Firebase UID of the user who owns the list."
+            },
+            {
+              "name": "listId",
+              "description": "The unique identifier for the list."
+            }
+          ]
+        }
+      },
+      {
         "path": "/users/{userId}/tasks/{taskId}",
         "definition": {
           "entityName": "Task",
           "schema": {
             "$ref": "#/backend/entities/Task"
           },
-          "description": "Stores tasks created by each user.",
+          "description": "Stores tasks created by each user. Tasks are stored in a single collection and can be filtered by listId on the client.",
           "params": [
             {
               "name": "userId",
@@ -142,32 +188,7 @@
             }
           ]
         }
-      },
-      {
-        "path": "/users/{userId}/tasks/{taskId}/subtasks/{subtaskId}",
-        "definition": {
-          "entityName": "SubTask",
-          "schema": {
-            "$ref": "#/backend/entities/SubTask"
-          },
-          "description": "Stores subtasks associated with a specific task for a given user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase UID of the user who owns the task."
-            },
-            {
-              "name": "taskId",
-              "description": "The unique identifier for the parent task."
-            },
-            {
-              "name": "subtaskId",
-              "description": "The unique identifier for the subtask."
-            }
-          ]
-        }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to ensure secure and scalable data management for the TaskFlow application. It leverages path-based ownership and denormalization to achieve authorization independence, simplifying security rules and enabling atomic operations. Tasks and SubTasks are organized under user-specific collections to enforce clear ownership. This approach ensures that listing operations are secure, as each user can only access tasks and subtasks under their control. User data is stored in a dedicated collection with the UID as the document ID for easy authentication integration.\n\nThe `/users/{userId}/tasks/{taskId}` structure is used to store task data, which creates a direct relationship between user and task. The `/users/{userId}/tasks/{taskId}/subtasks/{subtaskId}` structure creates a 1:N relationship for tasks to subtasks, allowing for hierarchical data storage. The `users` collection stores user profiles.\n\nAuthorization Independence:\nThe `tasks` and `subtasks` collections are structured under `/users/{userId}` path, which implicitly enforces that each task and subtask belongs to the user identified by `{userId}`. Security rules can easily use `request.auth.uid` to validate that the user accessing or modifying the data matches the `{userId}` in the path, without needing to read any data from the database.\n\nQAPs (Rules are not Filters):\nThis structure allows for secure `list` operations because the security rules can easily limit access to only the tasks and subtasks where `request.auth.uid == userId` in the path. This structure prevents unauthorized listing of tasks and subtasks belonging to other users.\n"
+    ]
   }
 }

@@ -8,9 +8,8 @@
  * Data Structure:
  * The data is organized hierarchically to reflect ownership:
  * - /users/{userId}: Stores the user's profile document.
+ * - /users/{userId}/lists/{listId}: Stores user-created task lists.
  * - /users/{userId}/tasks/{taskId}: Stores tasks owned by the user.
- * - /users/{userId}/tasks/{taskId}/subtasks/{subtaskId}: Stores subtasks
- *   belonging to a specific task.
  *
  * Key Security Decisions:
  * - Strict Ownership: All read and write operations are restricted to the
@@ -102,21 +101,22 @@ service cloud.firestore {
     }
     
     /**
-     * Validates that a new SubTask document's internal `taskId` field matches
-     * the parent task's ID from the path.
-     * @param taskId The ID of the parent task from the path.
+     * Validates that a new List document's internal `userId` field matches
+     * the user's ID in the path.
+     * @param userId The UID of the user from the path.
      */
-    function hasValidSubTaskDataOnCreate(taskId) {
-      return request.resource.data.taskId == taskId;
+    function hasValidListDataOnCreate(userId) {
+      return request.resource.data.userId == userId;
     }
 
     /**
-     * Enforces that a SubTask's `taskId` is immutable, preventing it from
-     * being moved to a different parent task.
+     * Enforces that a List document's `userId` is immutable, preventing
+     * a list from being reassigned to a different owner.
      */
-    function isSubTaskParentImmutable() {
-      return request.resource.data.taskId == resource.data.id;
+    function isListOwnerImmutable() {
+      return request.resource.data.userId == resource.data.id;
     }
+    
 
     /**
      * @description
@@ -140,6 +140,21 @@ service cloud.firestore {
 
       /**
        * @description
+       *   Rules for the lists collection, which is nested under each user.
+       *   Access is strictly limited to the owner of the parent user document.
+       * @path /users/{userId}/lists/{listId}
+       */
+      match /lists/{listId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && hasValidListDataOnCreate(userId);
+        allow update: if isExistingOwner(userId) && isListOwnerImmutable();
+        allow delete: if isExistingOwner(userId);
+      }
+
+
+      /**
+       * @description
        *   Rules for the tasks collection, which is nested under each user.
        *   Access is strictly limited to the owner of the parent user document.
        * @path /users/{userId}/tasks/{taskId}
@@ -156,26 +171,6 @@ service cloud.firestore {
         allow create: if isOwner(userId) && hasValidTaskDataOnCreate(userId);
         allow update: if isExistingOwner(userId) && isTaskOwnerImmutable();
         allow delete: if isExistingOwner(userId);
-
-        /**
-         * @description
-         *   Rules for the subtasks collection, nested under a specific task.
-         *   Access inherits the ownership context from the top-level user.
-         * @path /users/{userId}/tasks/{taskId}/subtasks/{subtaskId}
-         * @allow (create) A user creating a subtask under their own task.
-         *   e.g., `db.doc('users/user_abc/tasks/task_123/subtasks/sub_456').set(...)` by user 'user_abc'.
-         * @deny (update) A user trying to update a subtask belonging to another user.
-         *   e.g., `db.doc('users/user_xyz/tasks/task_123/subtasks/sub_456').update(...)` by user 'user_abc'.
-         * @principle
-         *   Enforces deep, hierarchical ownership. Validates relational integrity to the parent task.
-         */
-        match /subtasks/{subtaskId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId) && hasValidSubTaskDataOnCreate(taskId);
-          allow update: if isExistingOwner(userId) && isSubTaskParentImmutable();
-          allow delete: if isExistingOwner(userId);
-        }
       }
     }
   }

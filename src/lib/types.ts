@@ -1,16 +1,22 @@
+export type SubTask = {
+    id: string;
+    text: string;
+    completed: boolean;
+};
+
 export type Task = {
   id: string;
+  listId: string;
+  userId: string;
   text: string;
   completed: boolean;
-  subtasks: Task[];
+  subtasks: SubTask[];
   dueDate?: string;
 };
 
 export type TaskList = {
   id: string;
   name: string;
-  icon: string; // This will now be an SVG string
-  tasks: Task[];
-  imageUrl: string;
-  imageHint: string;
+  userId: string;
+  icon: string; // This is an SVG string
 };

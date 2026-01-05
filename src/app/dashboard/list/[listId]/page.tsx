@@ -1,23 +1,15 @@
 'use client';
 
-import { useState, useContext, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useMemo } from 'react';
+import { useParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
-  Briefcase,
-  Home,
-  List,
-  Music,
-  Palette,
-  Plane,
-  BookOpen,
-  ShoppingCart,
   Plus,
   BrainCircuit,
   Loader2,
 } from 'lucide-react';
-import { TasksContext } from '@/context/TasksContext';
+import { useTasks } from '@/context/TasksContext';
 import { TaskItem } from '@/components/TaskItem';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -35,7 +27,6 @@ import { useToast } from '@/hooks/use-toast';
 function SvgIcon({ svg, className }: { svg: string, className?: string }) {
     return <div className={className} dangerouslySetInnerHTML={{ __html: svg }} />;
 }
-
 
 function countTasks(
   tasks: Task[]
@@ -60,7 +51,7 @@ export default function ListDetailPage() {
   const params = useParams();
   const listId = params.listId as string;
 
-  const { lists, addTask } = useContext(TasksContext);
+  const { lists, addTask, isLoading } = useTasks();
   const [newTaskText, setNewTaskText] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
   const { toast } = useToast();
@@ -109,6 +100,14 @@ export default function ListDetailPage() {
       setIsSuggesting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+         <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    )
+  }
 
   if (!list) {
     return (
