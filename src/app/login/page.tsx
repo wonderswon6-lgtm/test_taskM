@@ -49,14 +49,12 @@ export default function LoginPage() {
               Enter your credentials to access your task dashboard.
             </CardDescription>
           </div>
-          <Link href="/" passHref legacyBehavior>
-            <Button variant="ghost" size="icon" className="absolute top-4 right-4" asChild>
-              <div>
-                <Home className="h-5 w-5" />
-                <span className="sr-only">Go to Home</span>
-              </div>
-            </Button>
-          </Link>
+          <Button asChild variant="ghost" size="icon" className="absolute top-4 right-4">
+            <Link href="/">
+              <Home className="h-5 w-5" />
+              <span className="sr-only">Go to Home</span>
+            </Link>
+          </Button>
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="grid gap-4">
