@@ -106,7 +106,7 @@ function TaskListCard({ list }: { list: CombinedTaskList }) {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+              <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
