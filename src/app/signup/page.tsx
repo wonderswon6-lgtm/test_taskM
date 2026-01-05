@@ -74,7 +74,7 @@ export default function SignupPage() {
             TaskFlow
           </h1>
           <p className="mt-4 max-w-md text-lg">
-            Streamline your workflow and enhance productivity. Your journey to organized success starts here.
+            Your personal space to organize, track, and complete every task.
           </p>
         </div>
         <div className="flex items-center justify-center p-4">

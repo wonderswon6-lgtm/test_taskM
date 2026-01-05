@@ -51,8 +51,8 @@
     {
       "id": "auth-background",
       "description": "A background for the login and signup pages.",
-      "imageUrl": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzOTY3MDZ8MHwxfHNlYXJjaHw0fHxwcm9kdWN0aXZpdHl8ZW58MHx8fHwxNzE4NzQ2MTg1fDA&ixlib=rb-4.0.3&q=80&w=1080",
-      "imageHint": "productivity team"
+      "imageUrl": "https://images.unsplash.com/photo-1559526324-c1f275fbfa32?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzOTY3MDZ8MHwxfHNlYXJjaHw1fHxwbGFubmluZ3xlbnwwfHx8fDE3MTg3NDYyNDJ8MA&ixlib=rb-4.0.3&q=80&w=1080",
+      "imageHint": "tasks checklist"
     }
   ]
 }
