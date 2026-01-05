@@ -108,16 +108,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               },
               { merge: true }
             );
+             // Manually format and set user to trigger redirect faster
+            setUser(formatUser(result.user));
+            router.push('/dashboard');
           }
         } catch (error) {
           console.error('Error getting redirect result', error);
         } finally {
-          // The onAuthStateChanged listener will handle setting the final loading state.
+           setLoading(false);
         }
       }
     };
     handleRedirectResult();
-  }, [auth, firestore]);
+  }, [auth, firestore, router]);
 
   const login = async (email?: string, password?: string) => {
     if (!auth || !email || !password) {
@@ -167,6 +170,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Auth service not available.');
     }
     await signOut(auth);
+    setUser(null);
+    router.push('/login');
   };
 
   const value = {
