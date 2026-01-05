@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useContext } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { MoreVertical, Trash2, Edit, CornerDownRight, Calendar as CalendarIcon } from 'lucide-react';
+import { MoreVertical, Trash2, Edit, CornerDownRight, BellRing } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -13,12 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { ReminderDialog } from '@/components/ReminderDialog';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TasksContext } from '@/context/TasksContext';
 import { format, isToday, isPast, isTomorrow } from 'date-fns';
@@ -39,7 +34,7 @@ export function TaskItem({
   const [editText, setEditText] = useState(task.text);
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
   const [newSubtaskText, setNewSubtaskText] = useState('');
-  const [isDatePickerOpen, setDatePickerOpen] = useState(false);
+  const [isReminderOpen, setReminderOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const subtaskInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,16 +43,18 @@ export function TaskItem({
   useEffect(() => {
     if (task.dueDate) {
       const date = new Date(task.dueDate);
-      let text = format(date, 'MMM d');
-      let className = 'text-muted-foreground';
-
+      let text = format(date, "MMM d, h:mm a");
+      let className = "text-muted-foreground";
+      
+      const today = new Date();
+      
       if (isToday(date)) {
-        text = 'Today';
+        text = `Today, ${format(date, "h:mm a")}`;
         className = 'text-blue-500 font-semibold';
       } else if (isTomorrow(date)) {
-        text = 'Tomorrow';
-      } else if (isPast(date)) {
-        text = `Overdue`;
+        text = `Tomorrow, ${format(date, "h:mm a")}`;
+      } else if (isPast(date) && !task.completed) {
+        text = `Overdue - ${format(date, "MMM d")}`;
         className = 'text-destructive font-semibold';
       }
       
@@ -65,7 +62,7 @@ export function TaskItem({
     } else {
       setDisplayDate({ text: '', className: '' });
     }
-  }, [task.dueDate]);
+  }, [task.dueDate, task.completed]);
 
   useEffect(() => {
     if (isEditing) {
@@ -101,11 +98,9 @@ export function TaskItem({
     }
   };
   
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setTaskDueDate(listId, task.id, date.toISOString());
-      setDatePickerOpen(false);
-    }
+  const handleDateSelect = (date: Date) => {
+    setTaskDueDate(listId, task.id, date.toISOString());
+    setReminderOpen(false);
   };
 
   return (
@@ -162,22 +157,10 @@ export function TaskItem({
         )}
 
         <div className="ml-auto flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <Popover open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <CalendarIcon className="h-4 w-4" />
-                <span className="sr-only">Set due date</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={task.dueDate ? new Date(task.dueDate) : undefined}
-                onSelect={handleDateSelect}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setReminderOpen(true)}>
+                <BellRing className="h-4 w-4" />
+                <span className="sr-only">Set reminder</span>
+            </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -245,6 +228,12 @@ export function TaskItem({
           </div>
         )}
       </div>
+      <ReminderDialog
+        open={isReminderOpen}
+        onOpenChange={setReminderOpen}
+        onSetReminder={handleDateSelect}
+        initialDate={task.dueDate}
+      />
     </motion.div>
   );
 }
