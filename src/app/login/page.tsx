@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { InteractiveCanvas } from '@/components/InteractiveCanvas';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -41,16 +42,8 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-background">
-      <div className="relative z-10 grid min-h-screen grid-cols-1 lg:grid-cols-2">
-        <div className="hidden flex-col justify-center p-12 text-white lg:flex">
-          <h1 className="font-headline text-5xl font-bold">
-            TaskFlow
-          </h1>
-          <p className="mt-4 max-w-md text-lg">
-            Your personal space to organize, track, and complete every task.
-          </p>
-        </div>
-        <div className="flex items-center justify-center p-4">
+      <InteractiveCanvas />
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
           <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-2xl">Welcome Back!</CardTitle>
@@ -111,7 +104,6 @@ export default function LoginPage() {
               </CardFooter>
             </form>
           </Card>
-        </div>
       </div>
     </div>
   );

@@ -44,70 +44,60 @@ export default function SignupPage() {
   return (
     <div className="relative min-h-screen w-full bg-background">
       <InteractiveCanvas />
-      <div className="relative z-10 grid min-h-screen grid-cols-1 lg:grid-cols-2">
-        <div className="hidden flex-col justify-center p-12 text-white lg:flex">
-          <h1 className="font-headline text-5xl font-bold">
-            TaskFlow
-          </h1>
-          <p className="mt-4 max-w-md text-lg">
-            Your personal space to organize, track, and complete every task.
-          </p>
-        </div>
-        <div className="flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl">Create an Account</CardTitle>
-              <CardDescription>
-                Get started with TaskFlow for free.
-              </CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSignup}>
-              <CardContent className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="********"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    suppressHydrationWarning
-                  />
-                </div>
-                <Button className="w-full" type="submit" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Account
-                </Button>
-              </CardContent>
-              <CardFooter className="flex justify-center">
-                <p className="text-center text-sm text-muted-foreground">
-                  Already have an account?{' '}
-                  <Link
-                    href="/login"
-                    className="font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Sign in
-                  </Link>
-                </p>
-              </CardFooter>
-            </form>
-          </Card>
-        </div>
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl">Create an Account</CardTitle>
+            <CardDescription>
+              Get started with TaskFlow for free.
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSignup}>
+            <CardContent className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={6}
+                  placeholder="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  suppressHydrationWarning
+                />
+              </div>
+              <Button className="w-full" type="submit" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Account
+              </Button>
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <p className="text-center text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <Link
+                  href="/login"
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Sign in
+                </Link>
+              </p>
+            </CardFooter>
+          </form>
+        </Card>
       </div>
     </div>
   );
