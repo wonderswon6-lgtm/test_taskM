@@ -97,6 +97,15 @@ export default function DashboardPage() {
       </div>
     );
   }
+  
+  const getInitials = (name?: string | null) => {
+    if (!name) return '';
+    const nameParts = name.split(' ');
+    if (nameParts.length > 1) {
+      return nameParts[0][0] + nameParts[nameParts.length - 1][0];
+    }
+    return name.substring(0, 2);
+  }
 
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -109,7 +118,7 @@ export default function DashboardPage() {
             <ThemeToggle />
             <Avatar>
               <AvatarImage src={user.avatarUrl} />
-              <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+              <AvatarFallback>{getInitials(user.displayName || user.email)}</AvatarFallback>
             </Avatar>
             {logout && <Button variant="ghost" size="icon" onClick={logout}>
               <LogOut className="h-5 w-5" />

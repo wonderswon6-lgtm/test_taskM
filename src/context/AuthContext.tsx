@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   User as FirebaseUser,
@@ -10,13 +16,16 @@ import {
   signInWithRedirect,
   signOut,
   getRedirectResult,
+  updateProfile,
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useFirebase, useUser } from '@/firebase';
 
 interface User {
   id: string;
   email: string | null;
   avatarUrl?: string;
+  displayName?: string | null;
 }
 
 interface AuthContextType {
@@ -28,7 +37,9 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 export const useAuth = () => {
   return useContext(AuthContext);
@@ -39,20 +50,22 @@ const formatUser = (firebaseUser: FirebaseUser): User => {
     id: firebaseUser.uid,
     email: firebaseUser.email,
     avatarUrl: firebaseUser.photoURL || undefined,
+    displayName: firebaseUser.displayName,
   };
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const firebaseContext = useFirebase();
   const { user: firebaseUser, isUserLoading } = useUser();
-  
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const auth = firebaseContext?.auth;
+  const firestore = firebaseContext?.firestore;
 
   useEffect(() => {
     setLoading(isUserLoading);
@@ -66,7 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (loading) return;
 
-    const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
+    const isAuthPage =
+      pathname === '/login' || pathname === '/signup' || pathname === '/';
     const isProtectedRoute = pathname.startsWith('/dashboard');
 
     if (user && isAuthPage) {
@@ -78,20 +92,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const handleRedirectResult = async () => {
-      if(auth) {
+      if (auth) {
         try {
           setLoading(true);
-          await getRedirectResult(auth);
+          const result = await getRedirectResult(auth);
+          if (result && firestore) {
+            const userRef = doc(firestore, 'users', result.user.uid);
+            await setDoc(
+              userRef,
+              {
+                id: result.user.uid,
+                email: result.user.email,
+                displayName: result.user.displayName,
+              },
+              { merge: true }
+            );
+          }
         } catch (error) {
-          console.error("Error getting redirect result", error);
+          console.error('Error getting redirect result', error);
         } finally {
           // The onAuthStateChanged listener will handle setting the final loading state.
         }
       }
     };
     handleRedirectResult();
-  }, [auth]);
-
+  }, [auth, firestore]);
 
   const login = async (email?: string, password?: string) => {
     if (!auth || !email || !password) {
@@ -101,10 +126,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (email?: string, password?: string) => {
-    if (!auth || !email || !password) {
-      throw new Error('Auth service not available or email/password missing.');
+    if (!auth || !email || !password || !firestore) {
+      throw new Error(
+        'Auth service, Firestore, or email/password missing.'
+      );
     }
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    const user = userCredential.user;
+
+    // Create a user profile in Firestore
+    const userRef = doc(firestore, 'users', user.uid);
+    await setDoc(userRef, {
+      id: user.uid,
+      email: user.email,
+      displayName: user.email?.split('@')[0] || 'New User', // Default display name
+    });
+
+    // Also update the auth profile
+    await updateProfile(user, {
+        displayName: user.email?.split('@')[0] || 'New User',
+    });
   };
 
   const loginWithGoogle = async () => {
