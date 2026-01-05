@@ -92,11 +92,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const handleRedirectResult = async () => {
-      if (auth) {
+      if (auth && firestore) {
         try {
-          setLoading(true);
           const result = await getRedirectResult(auth);
-          if (result && firestore) {
+          if (result) {
+            setLoading(true);
             const userRef = doc(firestore, 'users', result.user.uid);
             await setDoc(
               userRef,
@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               },
               { merge: true }
             );
-             // Manually format and set user to trigger redirect faster
+            // Manually format and set user to trigger redirect faster
             setUser(formatUser(result.user));
             router.push('/dashboard');
           }
