@@ -15,8 +15,7 @@ import { useFirebase, useUser, useCollection, useMemoFirebase } from '@/firebase
 import {
   collection,
   doc,
-  query,
-  where,
+  deleteDoc,
 } from 'firebase/firestore';
 import {
     setDocumentNonBlocking,
@@ -183,7 +182,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         // Create an array of promises for each task deletion
         const deletePromises = tasksToDelete.map(task => {
           const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', task.id);
-          // We don't use the non-blocking version here because we need to await the result
+          // Use the SDK's deleteDoc directly, as this function is async.
           return deleteDoc(taskDocRef);
         });
 
